@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUP Safe - Decisiones de Pádel Surf</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Smooth transition for rotating the wind arrow */
+        #windArrowContainer {
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-sky-50 to-blue-100 min-h-screen text-slate-800 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950 dark:text-slate-100 pb-12">
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-blue-600 dark:bg-blue-500 p-2 rounded-xl text-white shadow-lg shadow-blue-500/20">
+                    <i data-lucide="waves" class="w-6 h-6 animate-pulse"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">SUP Safe</span>
+                    <span class="text-xs block text-slate-500 dark:text-slate-400 font-medium">Asistente de Navegación</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button id="themeToggle" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors">
+                    <i data-lucide="sun" id="sunIcon" class="w-5 h-5 hidden"></i>
+                    <i data-lucide="moon" id="moonIcon" class="w-5 h-5"></i>
+                </button>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/50">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    API Activa
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        
+        <!-- Welcome Banner -->
+        <div class="bg-gradient-to-r from-blue-600 to-sky-500 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-blue-500/10 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+                <i data-lucide="waves" class="w-72 h-72"></i>
+            </div>
+            <div class="relative z-10 max-w-3xl space-y-3">
+                <span class="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm">Seguridad y Previsión de Entornos</span>
+                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">¡Vamos a hacer pádel surf! 🏄‍♂️</h1>
+                <p class="text-blue-50 text-base md:text-lg">
+                    Busca tu spot de playa o tramo de río (no introduzcas el río o balsa, sino el lugar en el que se encuentra) para calcular las condiciones para practicar de forma segura nuestro deporte favorito.
+                </p>
+            </div>
+        </div>
+
+        <!-- Beautiful Horizontal Weekly Date Strip Selector -->
+        <div class="space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Planifica tu Travesía Semanal</span>
+            <div id="dateSelectorContainer" class="flex gap-2.5 overflow-x-auto pb-2 snap-x scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                <!-- Javascript will dynamically inject 7 days here -->
+            </div>
+        </div>
+
+        <!-- Main Workspace Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Location, Daylight & Dynamic Ocean/River Card -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Location Finder with Environment Selector -->
+                <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold text-lg">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        <h2>Buscar Playa o Río</h2>
+                    </div>
+                    
+                    <!-- Environment Toggle Tabs -->
+                    <div class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl grid grid-cols-2 text-center text-xs font-bold">
+                        <button id="envCoastBtn" onclick="toggleEnvironment('costa')" class="py-2 rounded-lg bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm flex items-center justify-center gap-1.5 transition-all">
+                            <i data-lucide="waves" class="w-4 h-4"></i> Costa / Mar
+                        </button>
+                        <button id="envRiverBtn" onclick="toggleEnvironment('rio')" class="py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 flex items-center justify-center gap-1.5 transition-all">
+                            <i data-lucide="trees" class="w-4 h-4"></i> Río / Embalse
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Obtén telemetría náutica real de costas o caños mareales.</p>
+                    
+                    <div class="space-y-3">
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Ej: Cadiz, Ebro, Tajo, Mallorca..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
+                            <i data-lucide="search" class="absolute left-3.5 top-3 w-4 h-4 text-slate-400"></i>
+                        </div>
+                        <button id="searchBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                            <span>Consultar Spot</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                        <div id="loadingIndicator" class="hidden flex items-center justify-center gap-2 text-sm text-blue-500 py-2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                            <span id="loadingText">Cargando datos náuticos...</span>
+                        </div>
+                        <div id="searchResults" class="hidden max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div id="currentSpotCard" class="hidden p-3.5 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-900/30 rounded-xl space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider">Spot Seleccionado</span>
+                        <h4 id="spotName" class="font-bold text-slate-800 dark:text-white">--</h4>
+                        <p id="spotCoords" class="text-xs text-slate-500 dark:text-slate-400">Lat: --, Lon: --</p>
+                    </div>
+                </div>
+
+                <!-- Daylight Info Card -->
+                <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold text-lg">
+                        <i data-lucide="sun" class="w-5 h-5 animate-spin" style="animation-duration: 15s;"></i>
+                        <h2>Horas de Luz (Sol)</h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/20 p-3 rounded-xl flex items-center gap-3">
+                            <div class="p-2 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 rounded-lg">
+                                <i data-lucide="sunrise" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 block font-medium">Amanecer</span>
+                                <span id="sunriseTime" class="font-bold text-slate-700 dark:text-slate-200 text-sm">--:--</span>
+                            </div>
+                        </div>
+                        <div class="bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200/20 p-3 rounded-xl flex items-center gap-3">
+                            <div class="p-2 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded-lg">
+                                <i data-lucide="sunset" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 block font-medium">Atardecer</span>
+                                <span id="sunsetTime" class="font-bold text-slate-700 dark:text-slate-200 text-sm">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-blue-50/30 dark:bg-slate-800/30 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2">
+                        <i data-lucide="info" class="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0"></i>
+                        <span>¡Evita sustos! Planea siempre tu travesía de forma que regreses antes de la puesta de sol.</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Ocean Tide or River Hydrology Card -->
+                <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between text-blue-600 dark:text-blue-400 font-semibold text-lg">
+                        <div class="flex items-center gap-2">
+                            <i id="dynCardIcon" data-lucide="droplet" class="w-5 h-5 text-blue-500 animate-bounce"></i>
+                            <h2 id="dynCardTitle">Mareas del Día</h2>
+                        </div>
+                        <span id="dynBadge" class="text-[11px] px-2.5 py-1 rounded-full font-bold uppercase bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
+                            Sin datos
+                        </span>
+                    </div>
+                    
+                    <!-- Tide wave visualizer -->
+                    <div class="relative bg-gradient-to-b from-sky-50 to-blue-50 dark:from-slate-900 dark:to-slate-950 rounded-2xl h-28 overflow-hidden border border-slate-200/50 dark:border-slate-800/50 flex items-end">
+                        <svg class="absolute bottom-0 left-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                            <path id="tideWavePath" d="M0,100 L100,100 L100,100 L0,100 Z" class="fill-blue-500/20 dark:fill-blue-500/30 transition-all duration-1000 ease-in-out"></path>
+                            <path id="tideWavePathSecondary" d="M0,100 L100,100 L100,100 L0,100 Z" class="fill-blue-600/10 dark:fill-blue-600/15 transition-all duration-1000 ease-in-out"></path>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
+                            <span id="dynWaveLabel" class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Nivel de Agua estimado</span>
+                            <span id="dynWaveValue" class="text-2xl font-black text-slate-800 dark:text-white">--%</span>
+                            <span id="dynWaveTrend" class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Pendiente de Spot</span>
+                        </div>
+                    </div>
+
+                    <!-- List populated dynamically -->
+                    <div class="space-y-2" id="dynEventsContainer">
+                        <div class="flex items-center gap-2 text-slate-400 text-xs font-semibold p-2">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
+                            <span id="dynEventsPlaceholder">Esperando selección de spot para calcular datos de agua...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Decision & Metrics -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Main Safety Decision Card -->
+                <div id="decisionCard" class="relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-slate-50/50 dark:bg-slate-900/10 border-slate-200/50 dark:border-slate-800/50">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                        <div class="md:col-span-8 space-y-4">
+                            <div class="flex items-center gap-2">
+                                <span id="statusBadge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300 border border-slate-300/20">Sin datos</span>
+                                <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Recomendación de Seguridad</span>
+                            </div>
+                            <h2 id="decisionTitle" class="text-3xl font-extrabold tracking-tight">Introduce un Spot para comenzar</h2>
+                            <p id="decisionDesc" class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                                El sistema evaluará el porcentaje de seguridad analizando la velocidad del viento, dirección respecto a costa, altura y periodo de las olas.
+                            </p>
+                            <div id="safetyAlerts" class="space-y-2 pt-2">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                        <div class="md:col-span-4 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-slate-200/60 dark:border-slate-800/60 pt-6 md:pt-0 md:pl-6">
+                            <!-- Safety Score Circular Gauge -->
+                            <div class="relative w-36 h-36 flex items-center justify-center">
+                                <svg class="w-full h-full transform -rotate-90">
+                                    <circle cx="72" cy="72" r="58" class="stroke-slate-200 dark:stroke-slate-800" stroke-width="10" fill="transparent"/>
+                                    <circle id="gaugeProgress" cx="72" cy="72" r="58" class="stroke-slate-300" stroke-width="12" fill="transparent" stroke-dasharray="364.4" stroke-dashoffset="364.4"/>
+                                </svg>
+                                <div class="absolute flex flex-col items-center justify-center text-center">
+                                    <span id="scoreText" class="text-3xl font-black text-slate-800 dark:text-white">--%</span>
+                                    <span class="text-[9px] uppercase tracking-widest font-bold text-slate-400">Seguridad</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Hourly Forecast Section -->
+                <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold text-lg">
+                        <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                        <h2>Previsión Horaria de Hoy (Cada 3 horas)</h2>
+                    </div>
+                    <!-- Horizontal Scrollable Container -->
+                    <div id="hourlyForecastContainer" class="flex gap-4 overflow-x-auto pb-3 snap-x scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                        <div class="text-xs text-slate-400 italic py-4 flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4"></i>
+                            <span>Esperando selección de spot para mostrar la evolución horaria de la jornada...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ocean & Wind Current Metrics Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="metricsGridContainer">
+                    <!-- Metric 1: Wind Speed -->
+                    <div class="glass-card p-4 rounded-2xl shadow-sm space-y-1.5 flex flex-col justify-between">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                <i data-lucide="wind" class="w-4 h-4 text-sky-500"></i>
+                                <span class="text-xs font-semibold">Velocidad Viento</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800 dark:text-white" id="metricWind">-- km/h</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="metricWindCap">Esperando spot</span>
+                    </div>
+
+                    <!-- Metric 2: Wind Direction (with Rotating Arrow from Wind Source) -->
+                    <div class="glass-card p-4 rounded-2xl shadow-sm space-y-1.5 flex flex-col justify-between">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                <i data-lucide="compass" class="w-4 h-4 text-sky-500"></i>
+                                <span class="text-xs font-semibold">Dirección Viento</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <!-- Rotating Arrow Container (Arrow UP is default, pointing to where the wind comes FROM) -->
+                                <div id="windArrowContainer" class="smooth-rotate w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center text-sky-600 dark:text-sky-400">
+                                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                                </div>
+                                <p class="text-xl font-black text-slate-800 dark:text-white" id="metricWindDir">--</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium leading-tight" id="metricWindDirAngle">Procedencia del viento</span>
+                    </div>
+
+                    <!-- Metric 3: Wave Height (Only Coast) -->
+                    <div class="glass-card p-4 rounded-2xl shadow-sm space-y-1.5 flex flex-col justify-between" id="metric3Card">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                <i data-lucide="waves" class="w-4 h-4 text-blue-500"></i>
+                                <span class="text-xs font-semibold">Altura de Ola</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800 dark:text-white" id="metricWave">-- m</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="metricWaveCap">Estado del mar</span>
+                    </div>
+
+                    <!-- Metric 4: Wave Period (Only Coast) -->
+                    <div class="glass-card p-4 rounded-2xl shadow-sm space-y-1.5 flex flex-col justify-between" id="metric4Card">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                <i data-lucide="timer" class="w-4 h-4 text-purple-500"></i>
+                                <span class="text-xs font-semibold">Periodo de Ola</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800 dark:text-white" id="metricPeriod">-- s</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="metricPeriodCap">Fuerza de ola</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 py-8 border-t border-slate-200 dark:border-slate-800/80 mt-12 text-center space-y-2">
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+            SUP Safe - Diseñado para practicantes de Pádel Surf & Stand Up Paddleboarding.
+        </p>
+        <p class="text-[10px] text-slate-400">
+            Los datos de viento y oleaje son estimaciones analíticas basadas en modelos numéricos globales de Open-Meteo. El cálculo de mareas responde a una simulación armónica local aproximada. Valora siempre las condiciones reales antes de entrar al agua.
+        </p>
+    </footer>
+
+    <script>
+        // State management
+        let state = {
+            environment: 'costa', // 'costa' or 'rio'
+            selectedDayIndex: 0, // 0 (Hoy) to 6 (Hace una semana adelante)
+            windSpeed: 0,
+            windDeg: 0,
+            windDir: 'onshore',
+            waveHeight: 0.0,
+            wavePeriod: 0,
+            sunrise: '--:--',  
+            sunset: '--:--',   
+            currentSpot: null,
+            latitude: null,
+            longitude: null,
+            // Raw API Responses to re-evaluate dynamically when days shift
+            weatherRaw: null,
+            marineRaw: null,
+            hourly: [] // Array generated for selectedDayIndex
+        };
+
+        // DOM Elements mapping
+        const wavePath = document.getElementById('tideWavePath');
+        const wavePathSec = document.getElementById('tideWavePathSecondary');
+        const dynCardIcon = document.getElementById('dynCardIcon');
+        const dynCardTitle = document.getElementById('dynCardTitle');
+        const dynWaveLabel = document.getElementById('dynWaveLabel');
+        const dynWaveValue = document.getElementById('dynWaveValue');
+        const dynWaveTrend = document.getElementById('dynWaveTrend');
+        const dynBadge = document.getElementById('dynBadge');
+        const dynEventsContainer = document.getElementById('dynEventsContainer');
+
+        // Theme management
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
+        function initTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initTheme();
+            generateDateSelectors();
+            updateAppUI();
+        });
+
+        // Generate beautiful horizontal week days
+        function generateDateSelectors() {
+            const container = document.getElementById('dateSelectorContainer');
+            container.innerHTML = '';
+            
+            const weekdays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() + i);
+
+                let label = '';
+                if (i === 0) label = 'Hoy';
+                else if (i === 1) label = 'Mañana';
+                else label = weekdays[d.getDay()];
+
+                const dateStr = `${d.getDate()} ${months[d.getMonth()]}`;
+
+                const button = document.createElement('button');
+                button.onclick = () => selectDay(i);
+                button.id = `dateTab-${i}`;
+                
+                // Style the button dynamically based on selection state
+                setTabStyles(button, i === state.selectedDayIndex);
+
+                button.innerHTML = `
+                    <span class="text-xs font-extrabold uppercase tracking-tight block">${label}</span>
+                    <span class="text-[10px] opacity-80 block whitespace-nowrap mt-0.5 font-mono">${dateStr}</span>
+                `;
+
+                container.appendChild(button);
+            }
+        }
+
+        function setTabStyles(btn, isActive) {
+            btn.className = isActive 
+                ? "flex-shrink-0 w-24 bg-gradient-to-br from-blue-600 to-sky-500 text-white rounded-2xl py-3 px-4 text-center shadow-lg shadow-blue-500/25 transition-all transform scale-105 snap-center"
+                : "flex-shrink-0 w-24 bg-white/60 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl py-3 px-4 text-center transition-all hover:border-blue-400 snap-center";
+        }
+
+        // Change selected forecast day
+        function selectDay(index) {
+            state.selectedDayIndex = index;
+            
+            // Highlight the active tab and reset others
+            for (let i = 0; i < 7; i++) {
+                const btn = document.getElementById(`dateTab-${i}`);
+                if (btn) setTabStyles(btn, i === index);
+            }
+
+            // If we have spot data loaded, process the corresponding values of that day
+            if (state.currentSpot && state.weatherRaw) {
+                processActiveDayForecast();
+                showNotification(`Visualizando previsión para el ${getDateNameString(index)}.`, 'success');
+            } else {
+                updateAppUI();
+            }
+        }
+
+        function getDateNameString(index) {
+            if (index === 0) return 'día de hoy';
+            if (index === 1) return 'día de mañana';
+            const d = new Date();
+            d.setDate(d.getDate() + index);
+            const weekdays = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+            return weekdays[d.getDay()];
+        }
+
+        // Extracts the appropriate daily and hourly indices based on the selected day
+        function processActiveDayForecast() {
+            if (!state.weatherRaw) return;
+
+            const dIndex = state.selectedDayIndex;
+            
+            // Extract solar coordinates
+            const rawSunrise = state.weatherRaw.daily?.sunrise?.[dIndex] || '';
+            const rawSunset = state.weatherRaw.daily?.sunset?.[dIndex] || '';
+            state.sunrise = rawSunrise ? rawSunrise.split('T')[1] : '07:00';
+            state.sunset = rawSunset ? rawSunset.split('T')[1] : '21:00';
+
+            // Establish standard daytime hour for global metrics on selected day
+            // If selecting Today (0), we use the closest current hour. If tomorrow or further, we use 12:00 PM (noon)
+            let targetHour = 12; 
+            if (dIndex === 0) {
+                targetHour = new Date().getHours();
+            }
+
+            // Hourly index computation
+            const activeHourIndex = (dIndex * 24) + targetHour;
+
+            // Extract winds
+            const currentWind = state.weatherRaw.hourly?.wind_speed_10m?.[activeHourIndex] || 10;
+            const windDegree = state.weatherRaw.hourly?.wind_direction_10m?.[activeHourIndex] || 0;
+
+            // Extract marine waves if in Coast mode
+            let waveH = 0.1;
+            let waveP = 5;
+
+            if (state.environment === 'costa' && state.marineRaw) {
+                waveH = state.marineRaw.hourly?.wave_height?.[activeHourIndex] || 0.1;
+                waveP = state.marineRaw.hourly?.wave_period?.[activeHourIndex] || 5;
+            }
+
+            // Simple estimation of wind direction category
+            let directionLabel = 'onshore';
+            if (windDegree > 120 && windDegree < 240) {
+                directionLabel = 'offshore';
+            } else if ((windDegree >= 60 && windDegree <= 120) || (windDegree >= 240 && windDegree <= 300)) {
+                directionLabel = 'crossshore';
+            }
+
+            // Build hourly forecast timeline array for the selected day (sampling every 3 hours: 6, 9, 12, 15, 18, 21)
+            const targetHours = [6, 9, 12, 15, 18, 21];
+            const hTime = state.weatherRaw.hourly?.time || [];
+            const hTemp = state.weatherRaw.hourly?.temperature_2m || [];
+            const hWindSp = state.weatherRaw.hourly?.wind_speed_10m || [];
+            const hWindDir = state.weatherRaw.hourly?.wind_direction_10m || [];
+            const hWaveHeight = (state.environment === 'costa' && state.marineRaw) ? (state.marineRaw.hourly?.wave_height || []) : [];
+
+            state.hourly = targetHours.map(hour => {
+                const absoluteIndex = (dIndex * 24) + hour;
+                const fullTimeStr = hTime[absoluteIndex] || '';
+                const timeLabel = fullTimeStr ? fullTimeStr.split('T')[1] : `${hour.toString().padStart(2, '0')}:00`;
+                return {
+                    hour: timeLabel,
+                    temp: hTemp[absoluteIndex] ? Math.round(hTemp[absoluteIndex]) : 20,
+                    windSpeed: hWindSp[absoluteIndex] ? Math.round(hWindSp[absoluteIndex]) : 10,
+                    windDeg: hWindDir[absoluteIndex] || 0,
+                    waveHeight: state.environment === 'costa' ? (hWaveHeight[absoluteIndex] || 0.0) : null
+                };
+            });
+
+            // Sync values to State
+            state.windSpeed = Math.round(currentWind);
+            state.windDeg = windDegree;
+            state.windDir = directionLabel;
+            state.waveHeight = waveH;
+            state.wavePeriod = waveP;
+
+            updateAppUI();
+        }
+
+        // Custom Notification/Toast Center
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-xl shadow-lg border text-sm flex items-center gap-3 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto bg-white dark:bg-slate-900`;
+            
+            let colorClasses = 'border-blue-500 text-blue-700 dark:text-blue-300';
+            let icon = 'info';
+            
+            if (type === 'error') {
+                colorClasses = 'border-rose-500 text-rose-700 dark:text-rose-300';
+                icon = 'alert-triangle';
+            } else if (type === 'success') {
+                colorClasses = 'border-emerald-500 text-emerald-700 dark:text-emerald-300';
+                icon = 'check-circle';
+            }
+
+            toast.classList.add(...colorClasses.split(' '));
+
+            toast.innerHTML = `
+                <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0"></i>
+                <div class="flex-1 font-medium">${message}</div>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            // Animate In
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // Auto Remove after 4s
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Toggle Environments (Costa vs Río)
+        function toggleEnvironment(env) {
+            state.environment = env;
+            const envCoastBtn = document.getElementById('envCoastBtn');
+            const envRiverBtn = document.getElementById('envRiverBtn');
+
+            if (env === 'costa') {
+                envCoastBtn.className = "py-2 rounded-lg bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm flex items-center justify-center gap-1.5 transition-all";
+                envRiverBtn.className = "py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 flex items-center justify-center gap-1.5 transition-all";
+            } else {
+                envRiverBtn.className = "py-2 rounded-lg bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm flex items-center justify-center gap-1.5 transition-all";
+                envCoastBtn.className = "py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 flex items-center justify-center gap-1.5 transition-all";
+            }
+
+            // Re-process raw data with new environment properties
+            if (state.currentSpot) {
+                // If switching environments, we may need to reload marine data if it's not present
+                if (env === 'costa' && !state.marineRaw) {
+                    fetchSpotWeather({
+                        name: state.currentSpot,
+                        latitude: state.latitude,
+                        longitude: state.longitude,
+                        country: ""
+                    }, true);
+                } else {
+                    processActiveDayForecast();
+                }
+            } else {
+                updateAppUI();
+            }
+        }
+
+        // Harmonical Tide Simulation based on coordinates, shifting 50 minutes forward daily
+        function calculateTides(lat, lon, targetDayIndex) {
+            if (!lat || !lon) return [];
+            
+            const now = new Date();
+            now.setDate(now.getDate() + targetDayIndex);
+            
+            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+            
+            // Lunation cycle is ~29.53 days. This causes tide hours to drift roughly 50 mins (0.83 hours) per day
+            const lunarAge = (dayOfYear + 12) % 29.53; 
+            const lunarOffset = (lunarAge * 0.83) % 12.42; 
+            
+            // Longitudinal offset: 1 degree of longitude is ~4 minutes of time (1/15th of an hour)
+            const lonOffset = (lon / 15) % 12.42;
+            
+            // Base starting point for the high tide
+            let firstHighTide = (4.2 + lunarOffset + lonOffset + 12.42) % 12.42;
+            
+            let dayEvents = [];
+            let isHigh = true; 
+            
+            // Align base calculation to find the absolute first tide event of the day
+            let baseTime = firstHighTide;
+            while (baseTime > 0) {
+                baseTime -= 6.21; // High/Low tides alternate every 6 hours and 12 minutes
+                isHigh = !isHigh;
+            }
+            baseTime += 6.21;
+            isHigh = !isHigh;
+            
+            // Generate all tide events occurring within the 24 hours of today
+            for (let t = baseTime; t < 24; t += 6.21) {
+                dayEvents.push({
+                    time: t,
+                    type: isHigh ? 'high' : 'low',
+                    label: isHigh ? 'Pleamar (Marea Alta)' : 'Bajamar (Marea Baja)'
+                });
+                isHigh = !isHigh;
+            }
+            
+            return dayEvents.sort((a, b) => a.time - b.time);
+        }
+
+        // Helper: Converts decimal hours to HH:MM format
+        function decimalToTimeString(decimalHours) {
+            if (isNaN(decimalHours) || decimalHours < 0) return "--:--";
+            const hours = Math.floor(decimalHours);
+            const minutes = Math.round((decimalHours - hours) * 60) % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        // Standardized Safety Score Algorithm for general recreational SUP
+        function calculateSafetyScore() {
+            if (!state.currentSpot) {
+                return { score: null, warnings: [] };
+            }
+
+            let score = 100;
+            let warnings = [];
+
+            // 1. Wind Evaluation
+            if (state.windSpeed > 12) {
+                score -= (state.windSpeed - 12) * 5;
+                if (state.windSpeed > 18) {
+                    warnings.push("Viento fuerte (>18 km/h). Gran dificultad para avanzar de cara al viento.");
+                } else {
+                    warnings.push("Viento moderado. Exige mayor esfuerzo físico en la remada.");
+                }
+            }
+
+            // 2. Wind direction (Offshore wind is extremely dangerous in oceans)
+            if (state.environment === 'costa') {
+                if (state.windDir === 'offshore') {
+                    score -= 35;
+                    warnings.push("⚠️ VIENTO OFFSHORE: Sopla desde tierra a mar abierto. ¡Riesgo severo de arrastre!");
+                } else if (state.windDir === 'crossshore') {
+                    score -= 10;
+                    warnings.push("Viento de costado (lateral): Tendrás deriva transversal. Planifica la ida contra viento.");
+                }
+            }
+
+            // 3. Environmental specific parameters (Only coast waves)
+            if (state.environment === 'costa') {
+                // Ocean Waves impact
+                if (state.waveHeight > 0.3) {
+                    score -= (state.waveHeight * 10) * 12;
+                    if (state.waveHeight > 0.8) {
+                        warnings.push("Olas de tamaño notable (>0.8m). Dificultan la estabilidad de pie.");
+                    } else {
+                        warnings.push("Oleaje presente. Mayor inestabilidad y dificultad de equilibrio.");
+                    }
+                }
+                if (state.waveHeight > 0.4 && state.wavePeriod < 6) {
+                    score -= 10;
+                    warnings.push("Periodo de ola corto. Mar de viento desordenado e inestable (chopi).");
+                }
+            }
+
+            // Ensure score bounds
+            score = Math.max(0, Math.min(100, Math.round(score)));
+            return { score, warnings };
+        }
+
+        // Translates angle to cardinal label
+        function getWindCardinal(deg) {
+            const compassLabels = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+            const idx = Math.round(deg / 22.5) % 16;
+            return compassLabels[idx];
+        }
+
+        // Render Today's Hourly Forecast Timeline
+        function renderHourlyForecast() {
+            const container = document.getElementById('hourlyForecastContainer');
+            container.innerHTML = '';
+
+            if (!state.currentSpot || state.hourly.length === 0) {
+                container.innerHTML = `
+                    <div class="text-xs text-slate-400 italic py-4 flex items-center gap-2">
+                        <i data-lucide="info" class="w-4 h-4"></i>
+                        <span>Esperando selección de spot para mostrar la evolución horaria de la jornada...</span>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            state.hourly.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "flex-shrink-0 w-32 bg-white/40 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 p-3.5 rounded-xl text-center space-y-2.5 snap-start shadow-sm";
+                
+                const windCardinal = getWindCardinal(item.windDeg);
+
+                // Safety colored status dot
+                let dotColor = "bg-emerald-500";
+                if (item.windSpeed > 12 && item.windSpeed <= 18) {
+                    dotColor = "bg-amber-500";
+                } else if (item.windSpeed > 18) {
+                    dotColor = "bg-rose-500";
+                }
+
+                let waveHTML = '';
+                if (state.environment === 'costa' && item.waveHeight !== null) {
+                    waveHTML = `
+                        <div class="flex items-center justify-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 font-bold border-t border-slate-100 dark:border-slate-800/40 pt-1.5 mt-1.5">
+                            <i data-lucide="waves" class="w-3.5 h-3.5"></i>
+                            <span>${item.waveHeight.toFixed(1)} m</span>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">${item.hour}</span>
+                        <span class="w-2 h-2 rounded-full ${dotColor}"></span>
+                    </div>
+                    <div class="text-lg font-black text-slate-800 dark:text-white">${item.temp}°C</div>
+                    
+                    <div class="border-t border-slate-100 dark:border-slate-800/40 pt-2 space-y-1.5">
+                        <div class="flex items-center justify-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <i data-lucide="wind" class="w-3.5 h-3.5 text-sky-500"></i>
+                            <span class="font-bold">${item.windSpeed} km/h</span>
+                        </div>
+                        <div class="flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
+                            <!-- Arrow points to where the wind is coming from -->
+                            <div class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center text-sky-600 dark:text-sky-400" style="transform: rotate(${item.windDeg}deg)">
+                                <i data-lucide="arrow-up" class="w-3 h-3"></i>
+                            </div>
+                            <span class="font-bold">${windCardinal}</span>
+                        </div>
+                        ${waveHTML}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Update UI according to new state values
+        function updateAppUI() {
+            // Update solar times
+            document.getElementById('sunriseTime').textContent = state.sunrise;
+            document.getElementById('sunsetTime').textContent = state.sunset;
+
+            // Rotate Wind Compass Arrow (Arrow points UP by default, representing the direction the wind blows FROM)
+            const arrowContainer = document.getElementById('windArrowContainer');
+            if (state.currentSpot) {
+                arrowContainer.style.transform = `rotate(${state.windDeg}deg)`;
+                document.getElementById('metricWindDir').textContent = `${state.windDeg}°`;
+                
+                const windCardinal = getWindCardinal(state.windDeg);
+                document.getElementById('metricWindDirAngle').textContent = `Viento del ${windCardinal} (Sopla desde el ${windCardinal})`;
+            } else {
+                arrowContainer.style.transform = 'rotate(0deg)';
+                document.getElementById('metricWindDir').textContent = '--';
+                document.getElementById('metricWindDirAngle').textContent = 'Esperando spot';
+            }
+
+            // Handle layout differences based on environments (Costa vs Río)
+            const metric3Card = document.getElementById('metric3Card');
+            const metric4Card = document.getElementById('metric4Card');
+
+            if (state.environment === 'costa') {
+                metric3Card.classList.remove('hidden');
+                metric4Card.classList.remove('hidden');
+
+                // Style Ocean Coast metrics
+                document.getElementById('metricWave').textContent = state.currentSpot ? `${state.waveHeight.toFixed(1)} m` : "-- m";
+                
+                let waveCap = "Mar plato";
+                if (state.waveHeight > 0.3) waveCap = "Pequeño picado";
+                if (state.waveHeight > 0.7) waveCap = "Olas notables";
+                document.getElementById('metricWaveCap').textContent = state.currentSpot ? waveCap : "Estado del mar";
+
+                document.getElementById('metricPeriod').textContent = state.currentSpot ? `${state.wavePeriod} s` : "-- s";
+                
+                let periodCap = "Poca fuerza";
+                if (state.wavePeriod > 8) periodCap = "Mar de fondo limpio";
+                if (state.wavePeriod < 6 && state.waveHeight > 0.3) periodCap = "Mar desordenado";
+                document.getElementById('metricPeriodCap').textContent = state.currentSpot ? periodCap : "Fuerza de ola";
+            } else {
+                metric3Card.classList.add('hidden');
+                metric4Card.classList.add('hidden');
+            }
+
+            // Update Meteorological wind values
+            document.getElementById('metricWind').textContent = state.currentSpot ? `${state.windSpeed} km/h` : "-- km/h";
+            if (state.currentSpot) {
+                let windCap = "Brisa ideal";
+                if (state.windSpeed > 12) windCap = "Moderado";
+                if (state.windSpeed > 18) windCap = "¡Muy fuerte!";
+                document.getElementById('metricWindCap').textContent = windCap;
+            } else {
+                document.getElementById('metricWindCap').textContent = "Esperando spot";
+            }
+
+            // Update Dynamic Water/Tide panel values
+            if (state.environment === 'costa') {
+                // Ocean / Coast Mode Tides
+                dynCardIcon.setAttribute('data-lucide', 'waves');
+                dynCardTitle.textContent = "Mareas del Día";
+                dynWaveLabel.textContent = "Nivel de Agua estimado";
+
+                const tides = calculateTides(state.latitude, state.longitude, state.selectedDayIndex);
+                if (tides && tides.length > 0) {
+                    dynEventsContainer.innerHTML = '';
+                    
+                    const now = new Date();
+                    // If target day is not today, default to an approximate calculation starting at midnight
+                    const currentDecimalHour = (state.selectedDayIndex === 0) 
+                        ? (now.getHours() + now.getMinutes() / 60)
+                        : 12; // Noon of that day
+                    
+                    let previousEvent = null;
+                    let nextEvent = null;
+
+                    const expandedTides = [
+                        { time: tides[tides.length - 1].time - 12.42, type: tides[tides.length - 1].type },
+                        ...tides,
+                        { time: tides[0].time + 24, type: tides[0].type }
+                    ];
+
+                    for (let i = 0; i < expandedTides.length - 1; i++) {
+                        if (currentDecimalHour >= expandedTides[i].time && currentDecimalHour <= expandedTides[i + 1].time) {
+                            previousEvent = expandedTides[i];
+                            nextEvent = expandedTides[i + 1];
+                            break;
+                        }
+                    }
+
+                    if (!previousEvent) previousEvent = { time: currentDecimalHour - 6, type: 'low' };
+                    if (!nextEvent) nextEvent = { time: currentDecimalHour + 6, type: 'high' };
+
+                    const duration = nextEvent.time - previousEvent.time;
+                    const elapsed = currentDecimalHour - previousEvent.time;
+                    const progress = Math.max(0, Math.min(1, elapsed / duration));
+
+                    let tideHeightFactor = 0;
+                    let trendStr = "";
+                    
+                    if (previousEvent.type === 'low') {
+                        tideHeightFactor = (1 - Math.cos(progress * Math.PI)) / 2;
+                        trendStr = `Llenando (Subiendo a Pleamar en ${decimalToTimeString(nextEvent.time - (nextEvent.time >= 24 ? 24 : 0))})`;
+                        dynBadge.textContent = "Subiendo";
+                        dynBadge.className = "text-[11px] px-2.5 py-1 rounded-full font-bold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/50";
+                    } else {
+                        tideHeightFactor = (1 + Math.cos(progress * Math.PI)) / 2;
+                        trendStr = `Vaciando (Bajando a Bajamar en ${decimalToTimeString(nextEvent.time - (nextEvent.time >= 24 ? 24 : 0))})`;
+                        dynBadge.textContent = "Bajando";
+                        dynBadge.className = "text-[11px] px-2.5 py-1 rounded-full font-bold uppercase bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200/50";
+                    }
+
+                    const currentHeightPercent = Math.round(tideHeightFactor * 100);
+                    dynWaveValue.textContent = `${currentHeightPercent}%`;
+                    dynWaveTrend.textContent = trendStr;
+
+                    // Animate Wave height inside SVG
+                    const baseHeightY = 100 - (20 + (currentHeightPercent * 0.65));
+                    wavePath.setAttribute('d', `M0,${baseHeightY} Q25,${baseHeightY - 8} 50,${baseHeightY} T100,${baseHeightY} L100,100 L0,100 Z`);
+                    wavePathSec.setAttribute('d', `M0,${baseHeightY + 4} Q25,${baseHeightY - 4} 50,${baseHeightY + 4} T100,${baseHeightY + 4} L100,100 L0,100 Z`);
+
+                    tides.forEach(evt => {
+                        const evtTimeStr = decimalToTimeString(evt.time);
+                        const isPast = state.selectedDayIndex === 0 && evt.time < currentDecimalHour;
+                        
+                        const row = document.createElement('div');
+                        row.className = `flex items-center justify-between p-2 rounded-xl text-xs border ${
+                            isPast 
+                            ? 'bg-slate-100/50 dark:bg-slate-900/30 text-slate-400 dark:text-slate-500 border-transparent' 
+                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-800/80 shadow-sm'
+                        }`;
+
+                        const iconHTML = evt.type === 'high' 
+                            ? `<i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>` 
+                            : `<i data-lucide="trending-down" class="w-4 h-4 text-sky-500"></i>`;
+
+                        row.innerHTML = `
+                            <div class="flex items-center gap-2 font-medium">
+                                ${iconHTML}
+                                <span>${evt.label}</span>
+                                ${isPast ? `<span class="text-[9px] uppercase font-bold text-slate-400 dark:text-slate-500">(Pasada)</span>` : ''}
+                            </div>
+                            <span class="font-bold text-slate-800 dark:text-white font-mono">${evtTimeStr}</span>
+                        `;
+                        dynEventsContainer.appendChild(row);
+                    });
+                }
+            } else {
+                // River Mode: Hydrology and Flow Forecast adapted to Tidal Estuaries & Small Rivers
+                dynCardIcon.setAttribute('data-lucide', 'navigation');
+                dynCardTitle.textContent = "Horas de Marea Fluvial";
+                dynWaveLabel.textContent = "Nivel de Marea estimado";
+
+                const tides = calculateTides(state.latitude, state.longitude, state.selectedDayIndex);
+                if (tides && tides.length > 0) {
+                    dynEventsContainer.innerHTML = '';
+                    
+                    const now = new Date();
+                    const currentDecimalHour = (state.selectedDayIndex === 0) 
+                        ? (now.getHours() + now.getMinutes() / 60)
+                        : 12; // Noon
+                    
+                    let previousEvent = null;
+                    let nextEvent = null;
+
+                    const expandedTides = [
+                        { time: tides[tides.length - 1].time - 12.42, type: tides[tides.length - 1].type },
+                        ...tides,
+                        { time: tides[0].time + 24, type: tides[0].type }
+                    ];
+
+                    for (let i = 0; i < expandedTides.length - 1; i++) {
+                        if (currentDecimalHour >= expandedTides[i].time && currentDecimalHour <= expandedTides[i + 1].time) {
+                            previousEvent = expandedTides[i];
+                            nextEvent = expandedTides[i + 1];
+                            break;
+                        }
+                    }
+
+                    if (!previousEvent) previousEvent = { time: currentDecimalHour - 6, type: 'low' };
+                    if (!nextEvent) nextEvent = { time: currentDecimalHour + 6, type: 'high' };
+
+                    const duration = nextEvent.time - previousEvent.time;
+                    const elapsed = currentDecimalHour - previousEvent.time;
+                    const progress = Math.max(0, Math.min(1, elapsed / duration));
+
+                    let tideHeightFactor = 0;
+                    let trendStr = "";
+                    
+                    if (previousEvent.type === 'low') {
+                        tideHeightFactor = (1 - Math.cos(progress * Math.PI)) / 2;
+                        trendStr = `Llenando (Próxima Pleamar en ${decimalToTimeString(nextEvent.time - (nextEvent.time >= 24 ? 24 : 0))})`;
+                        dynBadge.textContent = "Llenando";
+                        dynBadge.className = "text-[11px] px-2.5 py-1 rounded-full font-bold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/50";
+                    } else {
+                        tideHeightFactor = (1 + Math.cos(progress * Math.PI)) / 2;
+                        trendStr = `Vaciando (Próxima Bajamar en ${decimalToTimeString(nextEvent.time - (nextEvent.time >= 24 ? 24 : 0))})`;
+                        dynBadge.textContent = "Vaciando";
+                        dynBadge.className = "text-[11px] px-2.5 py-1 rounded-full font-bold uppercase bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200/50";
+                    }
+
+                    const currentHeightPercent = Math.round(tideHeightFactor * 100);
+                    dynWaveValue.textContent = `${currentHeightPercent}%`;
+                    dynWaveTrend.textContent = trendStr;
+
+                    // Animate Wave height in Estuary
+                    const baseHeightY = 100 - (20 + (currentHeightPercent * 0.65));
+                    wavePath.setAttribute('d', `M0,${baseHeightY} Q25,${baseHeightY - 8} 50,${baseHeightY} T100,${baseHeightY} L100,100 L0,100 Z`);
+                    wavePathSec.setAttribute('d', `M0,${baseHeightY + 4} Q25,${baseHeightY - 4} 50,${baseHeightY + 4} T100,${baseHeightY + 4} L100,100 L0,100 Z`);
+
+                    // Explanatory Note for estuaries/rias
+                    const helpNote = document.createElement('div');
+                    helpNote.className = "p-3 bg-blue-500/10 dark:bg-blue-500/5 rounded-xl border border-blue-500/20 text-[11px] text-blue-700 dark:text-blue-300 space-y-1";
+                    helpNote.innerHTML = `
+                        <div class="flex items-center gap-1.5 font-bold">
+                            <i data-lucide="help-circle" class="w-4 h-4 text-blue-500"></i>
+                            <span>Ventana de Marea en Estuarios</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400">En rías y caños (ej. Río San Pedro), planifica la entrada y salida respecto a la Pleamar para evitar quedar encallado en fango.</p>
+                    `;
+                    dynEventsContainer.appendChild(helpNote);
+
+                    // Calculate safe windows around every Pleamar (High tide) of the day
+                    tides.forEach(evt => {
+                        if (evt.type === 'high') {
+                            const pleamarTime = evt.time;
+                            
+                            // Optimal Entry: 2.5h before until 0.5h before Pleamar (incoming tide)
+                            const entryStart = (pleamarTime - 2.5 + 24) % 24;
+                            const entryEnd = (pleamarTime - 0.5 + 24) % 24;
+                            
+                            // Safe Exit: Pleamar until 1.5h after (still deep enough)
+                            const exitStart = pleamarTime;
+                            const exitEnd = (pleamarTime + 1.5) % 24;
+
+                            const card = document.createElement('div');
+                            card.className = "p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2 shadow-sm text-xs";
+                            card.innerHTML = `
+                                <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-1.5">
+                                    <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                                        Pleamar Fluvial estimada: <span class="font-mono text-blue-600 dark:text-blue-400">${decimalToTimeString(pleamarTime)}</span>
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                                    <div class="bg-emerald-500/5 border border-emerald-500/20 p-2 rounded-lg space-y-0.5">
+                                        <span class="font-extrabold text-emerald-600 dark:text-emerald-400 block uppercase tracking-wider text-[8px]">Entrar al Cauce</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200 font-mono text-xs">${decimalToTimeString(entryStart)} - ${decimalToTimeString(entryEnd)}</span>
+                                        <p class="text-slate-400">Agua subiendo. Te ayuda a remontar y evita fango.</p>
+                                    </div>
+                                    <div class="bg-amber-500/5 border border-amber-500/20 p-2 rounded-lg space-y-0.5">
+                                        <span class="font-extrabold text-amber-600 dark:text-amber-400 block uppercase tracking-wider text-[8px]">Regresar / Salir</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200 font-mono text-xs">${decimalToTimeString(exitStart)} - ${decimalToTimeString(exitEnd)}</span>
+                                        <p class="text-slate-400">Máximo calado. Vuelve antes de que empiece a vaciar.</p>
+                                    </div>
+                                </div>
+                            `;
+                            dynEventsContainer.appendChild(card);
+                        }
+                    });
+                }
+            }
+
+            // Safety Decision Math
+            const { score, warnings } = calculateSafetyScore();
+
+            // Visual Circular Gauge Updating
+            const progressCircle = document.getElementById('gaugeProgress');
+            const circumference = 2 * Math.PI * 58; 
+
+            // Style adaptation based on score (Green, Yellow, Red, or Initial Slate)
+            const decisionCard = document.getElementById('decisionCard');
+            const statusBadge = document.getElementById('statusBadge');
+            const decisionTitle = document.getElementById('decisionTitle');
+            const decisionDesc = document.getElementById('decisionDesc');
+            
+            // Clear prior color classes
+            decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-slate-50/50 dark:bg-slate-900/10 border-slate-200/50 dark:border-slate-800/50";
+            statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-slate-300/20";
+            progressCircle.className.baseVal = "";
+
+            if (score === null) {
+                progressCircle.style.strokeDashoffset = circumference;
+                document.getElementById('scoreText').textContent = `--%`;
+                progressCircle.classList.add("stroke-slate-300");
+                
+                decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-slate-50/50 dark:bg-slate-900/10 border-slate-200/50 dark:border-slate-800/50";
+                statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300 border border-slate-300/20";
+                statusBadge.textContent = "Sin datos";
+                decisionTitle.textContent = "Introduce un Spot para comenzar";
+                decisionDesc.textContent = "El sistema evaluará el porcentaje de seguridad analizando la velocidad del viento, dirección respecto a costa, altura y periodo de las olas.";
+            } else {
+                const offset = circumference - (score / 100) * circumference;
+                progressCircle.style.strokeDashoffset = offset;
+                document.getElementById('scoreText').textContent = `${score}%`;
+
+                if (score >= 75) {
+                    // Safe / Green
+                    decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-emerald-50/40 dark:bg-emerald-950/10 border-emerald-500/30";
+                    statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-500/20";
+                    statusBadge.textContent = "Excelente";
+                    decisionTitle.textContent = "¡Condiciones Óptimas para SUP!";
+                    decisionDesc.textContent = (state.environment === 'costa')
+                        ? "Las condiciones meteorológicas son muy seguras y favorables en el mar. ¡Disfruta de la navegación!"
+                        : "El río o canal presenta condiciones de viento idóneas para realizar travesías tranquilas.";
+                    progressCircle.classList.add("stroke-emerald-500");
+                } else if (score >= 45) {
+                    // Attention / Orange
+                    decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-amber-50/40 dark:bg-amber-950/10 border-amber-500/30";
+                    statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-500/20";
+                    statusBadge.textContent = "Precaución";
+                    decisionTitle.textContent = "Condiciones Límite";
+                    decisionDesc.textContent = (state.environment === 'costa')
+                        ? "Existen algunos factores de riesgo en el mar o viento. Valora tu nivel técnico antes de salir."
+                        : "El viento o las corrientes del entorno exigen mayor esfuerzo físico y control.";
+                    progressCircle.classList.add("stroke-amber-500");
+                } else {
+                    // Danger / Red
+                    decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-rose-50/40 dark:bg-rose-950/10 border-rose-500/30";
+                    statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-800 dark:bg-rose-950 text-rose-300 border border-rose-500/20";
+                    statusBadge.textContent = "No Apto";
+                    decisionTitle.textContent = "⚠️ Condiciones Peligrosas";
+                    decisionDesc.textContent = (state.environment === 'costa')
+                        ? "El sistema desaconseja totalmente entrar al agua debido a vientos desfavorables o fuerte oleaje marino."
+                        : "⚠️ Se desaconseja la navegación debido a ráfagas de viento muy intensas o inestabilidad severa.";
+                    progressCircle.classList.add("stroke-rose-500");
+                }
+            }
+
+            // Warnings injection
+            const safetyContainer = document.getElementById('safetyAlerts');
+            safetyContainer.innerHTML = '';
+            
+            if (score === null) {
+                safetyContainer.innerHTML = `
+                    <div class="flex items-center gap-2 text-slate-400 text-xs font-semibold">
+                        <i data-lucide="help-circle" class="w-4 h-4"></i>
+                        <span>Esperando selección de spot para evaluar riesgos...</span>
+                    </div>
+                `;
+            } else if (warnings.length === 0) {
+                safetyContainer.innerHTML = `
+                    <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span>No hay alertas activas de seguridad en las previsiones.</span>
+                    </div>
+                `;
+            } else {
+                warnings.forEach(warn => {
+                    const warnEl = document.createElement('div');
+                    warnEl.className = "flex items-start gap-2 text-rose-600 dark:text-rose-400 text-xs font-medium bg-rose-500/5 dark:bg-rose-500/10 p-2 rounded-lg border border-rose-500/10";
+                    warnEl.innerHTML = `
+                        <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+                        <span>${warn}</span>
+                    `;
+                    safetyContainer.appendChild(warnEl);
+                });
+            }
+
+            // Re-render Lucide icons dynamically injected
+            lucide.createIcons();
+
+            // Refresh Hourly Panel
+            renderHourlyForecast();
+        }
+
+        // Open-Meteo Weather & Flood API Integration
+        searchBtn.addEventListener('click', async () => {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            loadingIndicator.classList.remove('hidden');
+            searchResults.classList.add('hidden');
+
+            try {
+                // 1. Search Geocoding location
+                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=es&format=json`;
+                const geoResponse = await fetch(geoUrl);
+                const geoData = await geoResponse.json();
+
+                if (!geoData.results || geoData.results.length === 0) {
+                    loadingIndicator.classList.add('hidden');
+                    showNotification("No se ha encontrado ninguna ubicación con ese nombre.", "error");
+                    return;
+                }
+
+                // Render matching options
+                renderSearchResults(geoData.results);
+            } catch (err) {
+                console.error(err);
+                loadingIndicator.classList.add('hidden');
+                showNotification("Ocurrió un error al conectar con el servicio de localización.", "error");
+            }
+        });
+
+        function renderSearchResults(results) {
+            searchResults.innerHTML = '';
+            searchResults.classList.remove('hidden');
+            loadingIndicator.classList.add('hidden');
+
+            results.forEach(loc => {
+                const item = document.createElement('button');
+                item.className = "w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs flex items-center justify-between";
+                item.innerHTML = `
+                    <div>
+                        <span class="font-semibold block">${loc.name}</span>
+                        <span class="text-slate-400 text-[10px]">${loc.admin1 || ''}, ${loc.country}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 font-mono">Lat: ${loc.latitude.toFixed(2)}</span>
+                `;
+                item.addEventListener('click', () => fetchSpotWeather(loc));
+                searchResults.appendChild(item);
+            });
+        }
+
+        async function fetchSpotWeather(location, isSilence = false) {
+            searchResults.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+            document.getElementById('loadingText').textContent = "Consultando datos meteorológicos...";
+
+            const lat = location.latitude;
+            const lon = location.longitude;
+
+            try {
+                // Call Weather forecast (current, 7 days daily sunrise/sunset, and hourly wind + temperature for trend)
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,wind_direction_10m&daily=sunrise,sunset&forecast_days=7&timezone=auto`;
+                const weatherRes = await fetch(weatherUrl);
+                const weatherData = await weatherRes.json();
+
+                // Establish base environmental parameters
+                let marineData = null;
+
+                if (state.environment === 'costa') {
+                    // Call Marine forecast for all 7 days of waves (24h hourly intervals)
+                    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_period&forecast_days=7`;
+                    const marineRes = await fetch(marineUrl);
+                    marineData = await marineRes.json();
+                }
+
+                // Update App State Raw variables to allow seamless shifting of days
+                state.latitude = lat;
+                state.longitude = lon;
+                state.weatherRaw = weatherData;
+                state.marineRaw = marineData;
+                state.currentSpot = location.name;
+
+                // Process the active selected day forecast
+                processActiveDayForecast();
+                
+                // Show Spot Card
+                const currentSpotCard = document.getElementById('currentSpotCard');
+                currentSpotCard.classList.remove('hidden');
+                document.getElementById('spotName').textContent = `${location.name} ${location.country ? ', ' + location.country : ''}`;
+                document.getElementById('spotCoords').textContent = `Lat: ${lat.toFixed(2)}, Lon: ${lon.toFixed(2)}`;
+
+                if (!isSilence) {
+                    const infoMode = state.environment === 'costa' ? 'marítimas' : 'de interior';
+                    showNotification(`Condiciones ${infoMode} de ${location.name} sincronizadas para toda la semana.`, "success");
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification("Error cargando los detalles climáticos. Es posible que el spot no tenga previsiones activas.", "error");
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
