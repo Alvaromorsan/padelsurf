@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUP Safe - Decisiones de Pádel Surf en Cádiz</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Custom scrollbar styling for timelines */
+        .scrollbar-thin::-webkit-scrollbar {
+            height: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-sky-50 to-blue-100 min-h-screen text-slate-800 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950 dark:text-slate-100 pb-12">
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-blue-600 dark:bg-blue-500 p-2 rounded-xl text-white shadow-lg shadow-blue-500/20">
+                    <i data-lucide="waves" class="w-6 h-6 animate-pulse"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">SUP Safe</span>
+                    <span class="text-xs block text-slate-500 dark:text-slate-400 font-medium">Cádiz Edition</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button id="themeToggle" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors">
+                    <i data-lucide="sun" id="sunIcon" class="w-5 h-5 hidden"></i>
+                    <i data-lucide="moon" id="moonIcon" class="w-5 h-5"></i>
+                </button>
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/50">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    Gis Activa
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        
+        <!-- Welcome Banner specifically for Cadiz -->
+        <div class="bg-gradient-to-r from-blue-600 to-sky-500 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-blue-500/10 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+                <i data-lucide="waves" class="w-72 h-72"></i>
+            </div>
+            <div class="relative z-10 max-w-4xl space-y-3">
+                <span class="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm">Cádiz - Guía Náutica de Precisión</span>
+                <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">¡Vamos a hacer pádel surf en la provincia de Cádiz!</h1>
+                <p class="text-blue-50 text-sm md:text-base leading-relaxed">
+                    Busca tu spot de playa o tramo de río (no introduzcas el río o balsa, sino el lugar en el que se encuentra) para calcular las condiciones para practicar de forma segura nuestro deporte favorito.
+                </p>
+            </div>
+        </div>
+
+        <!-- Horizontal Weekly Date Strip Selector -->
+        <div class="space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Planifica tu Travesía Semanal</span>
+            <div id="dateSelectorContainer" class="flex gap-2.5 overflow-x-auto pb-2 snap-x scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                <!-- Javascript will dynamically inject 7 days here -->
+            </div>
+        </div>
+
+        <!-- Main Workspace Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Spot Selector & Water Behavior Panel -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Location Panel with Beach, River & Reservoir Tabs -->
+                <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold text-lg">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        <h2>Selector de Spots Oficiales</h2>
+                    </div>
+                    
+                    <!-- 3-Tab Navigator -->
+                    <div class="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl grid grid-cols-3 text-center text-xs font-bold">
+                        <button id="tabPlaya" onclick="switchTab('playa')" class="py-2.5 rounded-lg bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm transition-all flex flex-col sm:flex-row items-center justify-center gap-1">
+                            <i data-lucide="umbrella" class="w-4 h-4"></i> Playas
+                        </button>
+                        <button id="tabRio" onclick="switchTab('rio')" class="py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-all flex flex-col sm:flex-row items-center justify-center gap-1">
+                            <i data-lucide="waves" class="w-4 h-4"></i> Ríos
+                        </button>
+                        <button id="tabEmbalse" onclick="switchTab('embalse')" class="py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-all flex flex-col sm:flex-row items-center justify-center gap-1">
+                            <i data-lucide="droplet" class="w-4 h-4"></i> Embalses
+                        </button>
+                    </div>
+
+                    <!-- Dropdown Selectors dynamically loaded from Cádiz datasets -->
+                    <div id="selectionForm" class="space-y-4 pt-2">
+                        
+                        <!-- Playa Selectors Container -->
+                        <div id="formPlaya" class="space-y-3">
+                            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Selecciona Municipio:</label>
+                            <select id="selectPlayaMunicipio" onchange="onPlayaMunicipioChanged()" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-semibold transition-all">
+                                <!-- Loaded dynamically -->
+                            </select>
+
+                            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Selecciona Playa de Cádiz:</label>
+                            <select id="selectPlayaSpot" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-semibold transition-all">
+                                <!-- Loaded dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Río Selector Container -->
+                        <div id="formRio" class="space-y-3 hidden">
+                            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Selecciona Río / Caño Mareal:</label>
+                            <select id="selectRioSpot" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-semibold transition-all">
+                                <!-- Loaded dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Embalse Selector Container -->
+                        <div id="formEmbalse" class="space-y-3 hidden">
+                            <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Selecciona Embalse:</label>
+                            <select id="selectEmbalseSpot" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-semibold transition-all">
+                                <!-- Loaded dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Calculation CTA -->
+                        <button id="calculateBtn" onclick="onConsultarSpotClick()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-blue-500/10 transition-all flex items-center justify-center gap-2">
+                            <span>Sincronizar y Calcular Spot</span>
+                            <i data-lucide="play" class="w-4 h-4"></i>
+                        </button>
+                        
+                        <div id="loadingIndicator" class="hidden flex items-center justify-center gap-2 text-sm text-blue-500 py-1">
+                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                            <span>Calculando modelos meteorológicos...</span>
+                        </div>
+                    </div>
+
+                    <!-- Selected Spot Badge -->
+                    <div id="currentSpotCard" class="hidden p-3.5 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-900/30 rounded-xl space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider">Mapeo del Spot</span>
+                        <h4 id="spotName" class="font-extrabold text-slate-800 dark:text-white">--</h4>
+                        <div id="spotMeta" class="text-xs text-slate-500 dark:text-slate-400 space-y-0.5">
+                            <!-- Metas description loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daylight Card -->
+                <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold text-lg">
+                        <i data-lucide="sun" class="w-5 h-5 animate-spin" style="animation-duration: 20s;"></i>
+                        <h2>Horas de Luz (Cádiz)</h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/20 p-3 rounded-xl flex items-center gap-2.5">
+                            <div class="p-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 rounded-lg">
+                                <i data-lucide="sunrise" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-slate-400 block font-medium">Ortos</span>
+                                <span id="sunriseTime" class="font-bold text-slate-700 dark:text-slate-200 text-xs font-mono">--:--</span>
+                            </div>
+                        </div>
+                        <div class="bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200/20 p-3 rounded-xl flex items-center gap-2.5">
+                            <div class="p-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 rounded-lg">
+                                <i data-lucide="sunset" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-slate-400 block font-medium">Ocaso</span>
+                                <span id="sunsetTime" class="font-bold text-slate-700 dark:text-slate-200 text-xs font-mono">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-blue-50/30 dark:bg-slate-800/30 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2">
+                        <i data-lucide="info" class="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0"></i>
+                        <span>Importante: Planifica tus rutas para regresar siempre antes del ocaso para evitar rescates.</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Ocean or River Water Levels -->
+                <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between text-blue-600 dark:text-blue-400 font-semibold text-lg">
+                        <div class="flex items-center gap-2">
+                            <i id="dynCardIcon" data-lucide="droplet" class="w-5 h-5 text-blue-500 animate-bounce"></i>
+                            <h2 id="dynCardTitle">Comportamiento del Agua</h2>
+                        </div>
+                        <span id="dynBadge" class="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
+                            Sin datos
+                        </span>
+                    </div>
+                    
+                    <!-- Water Level Visualizer -->
+                    <div class="relative bg-gradient-to-b from-sky-50 to-blue-50 dark:from-slate-900 dark:to-slate-950 rounded-2xl h-24 overflow-hidden border border-slate-200/50 dark:border-slate-800/50 flex items-end">
+                        <svg class="absolute bottom-0 left-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                            <path id="tideWavePath" d="M0,100 L100,100 L100,100 L0,100 Z" class="fill-blue-500/20 dark:fill-blue-500/30 transition-all duration-1000 ease-in-out"></path>
+                            <path id="tideWavePathSecondary" d="M0,100 L100,100 L100,100 L0,100 Z" class="fill-blue-600/10 dark:fill-blue-600/15 transition-all duration-1000 ease-in-out"></path>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
+                            <span id="dynWaveLabel" class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Nivel de marea estimado</span>
+                            <span id="dynWaveValue" class="text-2xl font-black text-slate-800 dark:text-white">--%</span>
+                            <span id="dynWaveTrend" class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5">Sincroniza un spot</span>
+                        </div>
+                    </div>
+
+                    <!-- Water events table -->
+                    <div class="space-y-2" id="dynEventsContainer">
+                        <div class="flex items-center gap-2 text-slate-400 text-xs font-semibold p-2">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
+                            <span id="dynEventsPlaceholder">Esperando que selecciones tu spot en Cádiz para evaluar el calado...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Decision & Interactive Graphics -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Main Safety Decision Card -->
+                <div id="decisionCard" class="relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-slate-50/50 dark:bg-slate-900/10 border-slate-200/50 dark:border-slate-800/50">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                        <div class="md:col-span-8 space-y-4">
+                            <div class="flex items-center gap-2">
+                                <span id="statusBadge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300 border border-slate-300/20">Sin datos</span>
+                                <span class="text-xs text-slate-400 dark:text-slate-500 font-semibold">Análisis de Navegabilidad</span>
+                            </div>
+                            <h2 id="decisionTitle" class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">Selecciona tu spot de Cádiz</h2>
+                            <p id="decisionDesc" class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                                Evaluaremos vuestro plan diario teniendo en cuenta la fuerza del viento, las olas del Atlántico o la orientación de cada playa/embalse para garantizar la seguridad del grupo.
+                            </p>
+                            <div id="safetyAlerts" class="space-y-2 pt-2">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                        <div class="md:col-span-4 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-slate-200/60 dark:border-slate-800/60 pt-6 md:pt-0 md:pl-6">
+                            <!-- Safety Circle progress gauge -->
+                            <div class="relative w-36 h-36 flex items-center justify-center">
+                                <svg class="w-full h-full transform -rotate-90">
+                                    <circle cx="72" cy="72" r="58" class="stroke-slate-200 dark:stroke-slate-800" stroke-width="8" fill="transparent"/>
+                                    <circle id="gaugeProgress" cx="72" cy="72" r="58" class="stroke-slate-300" stroke-width="10" fill="transparent" stroke-dasharray="364.4" stroke-dashoffset="364.4"/>
+                                </svg>
+                                <div class="absolute flex flex-col items-center justify-center text-center">
+                                    <span id="scoreText" class="text-3xl font-black text-slate-800 dark:text-white">--%</span>
+                                    <span class="text-[9px] uppercase tracking-wider font-bold text-slate-400">Seguridad</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hourly Forecast Timeline Section -->
+                <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold text-lg">
+                        <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                        <h2>Evolución Horaria para la fecha seleccionada (Cada 3 horas)</h2>
+                    </div>
+                    <!-- Horizontal Carousel Scrollable on Mobile with Touch -->
+                    <div id="hourlyForecastContainer" class="flex gap-4 overflow-x-auto pb-3 snap-x scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                        <div class="text-xs text-slate-400 italic py-4 flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4"></i>
+                            <span>Sincroniza un spot de Cádiz para ver la evolución horaria del viento y olas de esa jornada...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic metrics grid changing layout dynamically based on current selected tab -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="metricsGridContainer">
+                    
+                    <!-- Wind Speed Card -->
+                    <div class="glass-card p-4 rounded-2xl shadow-sm space-y-1.5 flex flex-col justify-between">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                <i data-lucide="wind" class="w-4 h-4 text-sky-500"></i>
+                                <span class="text-xs font-semibold">Velocidad Viento</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800 dark:text-white" id="metricWind">-- km/h</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="metricWindCap">Esperando spot</span>
+                    </div>
+
+                    <!-- METRIC CARD 2: Wind direction with dynamic custom drawings -->
+                    <div class="glass-card p-4 rounded-2xl shadow-sm space-y-1.5 flex flex-col justify-between" id="windDirCard">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                <i data-lucide="compass" class="w-4 h-4 text-sky-500"></i>
+                                <span class="text-xs font-semibold">Dirección del Viento</span>
+                            </div>
+                            
+                            <!-- Dynamic Visual Gauge Container -->
+                            <div class="flex items-center gap-3">
+                                <div id="windDrawingContainer" class="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 flex items-center justify-center flex-shrink-0">
+                                    <!-- Drawing will be injected here dynamically by JavaScript -->
+                                    <i data-lucide="compass" class="w-8 h-8 text-slate-300"></i>
+                                </div>
+                                <div>
+                                    <p class="text-lg font-black text-slate-800 dark:text-white" id="metricWindDir">--</p>
+                                    <span class="text-[9px] text-slate-400 font-bold block" id="metricWindDirCardinal">Cardinal</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] text-slate-400 font-semibold leading-tight leading-none block" id="metricWindDirAngle">Sopla desde el origen</span>
+                    </div>
+
+                    <!-- METRIC CARD 3: Custom or wave heights -->
+                    <div class="glass-card p-4 rounded-2xl shadow-sm space-y-1.5 flex flex-col justify-between" id="metric3Card">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                <i id="metric3Icon" data-lucide="waves" class="w-4 h-4 text-blue-500"></i>
+                                <span class="text-xs font-semibold" id="metric3Title">Altura de Ola</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800 dark:text-white" id="metricWave">--</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="metricWaveCap">Estado del mar</span>
+                    </div>
+
+                    <!-- METRIC CARD 4: Wave period or details -->
+                    <div class="glass-card p-4 rounded-2xl shadow-sm space-y-1.5 flex flex-col justify-between" id="metric4Card">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                <i id="metric4Icon" data-lucide="timer" class="w-4 h-4 text-purple-500"></i>
+                                <span class="text-xs font-semibold" id="metric4Title">Periodo de Ola</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800 dark:text-white" id="metricPeriod">--</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="metricPeriodCap">Fuerza de ola</span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer of the page -->
+    <footer class="max-w-7xl mx-auto px-4 py-8 border-t border-slate-200 dark:border-slate-800/80 mt-12 text-center space-y-2">
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            SUP Safe Cádiz - El asistente inteligente de tu grupo de Pádel Surf.
+        </p>
+        <p class="text-[10px] text-slate-400 leading-relaxed max-w-4xl mx-auto">
+            La base de geolocalización incluye información mapeada de los archivos de Playas, Ríos y Embalses de Cádiz. Los datos meteorológicos y marítimos son consumidos en tiempo real del modelo global Open-Meteo. Los gráficos de viento interactivos se basan en la orientación dominante del spot seleccionado. Actúa siempre con precaución.
+        </p>
+    </footer>
+
+    <script>
+        // Database arrays representing local geographical records for Cádiz
+        const PLAYAS_DB = [
+            { municipio: "Tarifa", playa: "Valdevaqueros", orientacion: "Suroeste", iniciales: "SO", lat: 36.069, lon: -5.681 },
+            { municipio: "Tarifa", playa: "Los Lances", orientacion: "Suroeste", iniciales: "SO", lat: 36.028, lon: -5.625 },
+            { municipio: "Cádiz", playa: "La Victoria", orientacion: "Suroeste", iniciales: "SO", lat: 36.505, lon: -6.277 },
+            { municipio: "Cádiz", playa: "La Caleta", orientacion: "Oeste", iniciales: "O", lat: 36.531, lon: -6.307 },
+            { municipio: "Cádiz", playa: "Santa María del Mar", orientacion: "Suroeste", iniciales: "SO", lat: 36.524, lon: -6.288 },
+            { municipio: "Chiclana de la Frontera", playa: "La Barrosa", orientacion: "Suroeste", iniciales: "SO", lat: 36.354, lon: -6.168 },
+            { municipio: "Chiclana de la Frontera", playa: "Sancti Petri", orientacion: "Suroeste", iniciales: "SO", lat: 36.383, lon: -6.211 },
+            { municipio: "Conil de la Frontera", playa: "Los Bateles", orientacion: "Suroeste", iniciales: "SO", lat: 36.273, lon: -6.091 },
+            { municipio: "Conil de la Frontera", playa: "Roche", orientacion: "Suroeste", iniciales: "SO", lat: 36.302, lon: -6.136 },
+            { municipio: "El Puerto de Santa María", playa: "Valdelagrana", orientacion: "Sur", iniciales: "S", lat: 36.581, lon: -6.219 },
+            { municipio: "El Puerto de Santa María", playa: "Las Redes", orientacion: "Suroeste", iniciales: "SO", lat: 36.598, lon: -6.269 },
+            { municipio: "Rota", playa: "La Costilla", orientacion: "Suroeste", iniciales: "SO", lat: 36.618, lon: -6.363 },
+            { municipio: "Chipiona", playa: "Playa de Regla", orientacion: "Suroeste", iniciales: "SO", lat: 36.732, lon: -6.444 },
+            { municipio: "Sanlúcar de Barrameda", playa: "Bajo de Guía", orientacion: "Oeste", iniciales: "O", lat: 36.784, lon: -6.355 },
+            { municipio: "Barbates (Zahara)", playa: "Zahara de los Atunes", orientacion: "Suroeste", iniciales: "SO", lat: 36.134, lon: -5.845 },
+            { municipio: "Algeciras", playa: "Playa de Getares", orientacion: "Este", iniciales: "E", lat: 36.098, lon: -5.442 },
+            { municipio: "La Línea de la Concepción", playa: "Playa de Poniente", orientacion: "Oeste", iniciales: "O", lat: 36.158, lon: -5.352 },
+            { municipio: "San Roque (Sotogrande)", playa: "Sotogrande", orientacion: "Este", iniciales: "E", lat: 36.295, lon: -5.275 }
+        ];
+
+        const RIOS_DB = [
+            { rio: "Río San Pedro", longitud: "25 km", curso: "Este-Oeste", iniciales: "E-O", desembocadura: "Bahía de Cádiz", vertiente: "Atlántica", lat: 36.538, lon: -6.213 },
+            { rio: "Río Guadalete", longitud: "157 km", curso: "Noreste-Suroeste", iniciales: "NE-SO", desembocadura: "Bahía de Cádiz", vertiente: "Atlántica", lat: 36.598, lon: -6.212 },
+            { rio: "Río Guadiaro", longitud: "82 km", curso: "Norte-Sur", iniciales: "N-S", desembocadura: "Mar Mediterráneo", vertiente: "Mediterránea", lat: 36.299, lon: -5.276 },
+            { rio: "Río Barbate", longitud: "80 km", curso: "Noreste-Suroeste", iniciales: "NE-SO", desembocadura: "Océano Atlántico", vertiente: "Atlántica", lat: 36.185, lon: -5.918 },
+            { rio: "Río Majaceite", longitud: "50 km", curso: "Este-Oeste", iniciales: "E-O", desembocadura: "Río Guadalete", vertiente: "Atlántica", lat: 36.764, lon: -5.467 },
+            { rio: "Río Iro", longitud: "15 km", curso: "Noreste-Suroeste", iniciales: "NE-SO", desembocadura: "Caño de Sancti Petri", vertiente: "Atlántica", lat: 36.421, lon: -6.145 },
+            { rio: "Río Palmones", longitud: "37 km", curso: "Oeste-Este", iniciales: "O-E", desembocadura: "Bahía de Algeciras", vertiente: "Mediterránea", lat: 36.173, lon: -5.441 }
+        ];
+
+        const EMBALSES_DB = [
+            { embalse: "Guadalcacín", capacidad: "800.3 hm³", cuenca: "Majaceite", eje: "Norte-Sur", iniciales: "N-S", termino: "San José del Valle", llenado: 24, lat: 36.685, lon: -5.742 },
+            { embalse: "Bornos", capacidad: "278.2 hm³", cuenca: "Guadalete", eje: "Noreste-Suroeste", iniciales: "NE-SO", termino: "Bornos", llenado: 21, lat: 36.811, lon: -5.623 },
+            { embalse: "Zahara-El Gastor", capacidad: "222.7 hm³", cuenca: "Guadalete", eje: "Noreste-Suroeste", iniciales: "NE-SO", termino: "Zahara de la Sierra", llenado: 14, lat: 36.834, lon: -5.378 },
+            { embalse: "Los Hurones", capacidad: "135.3 hm³", cuenca: "Majaceite", eje: "Norte-Sur", iniciales: "N-S", termino: "San José del Valle", llenado: 51, lat: 36.721, lon: -5.498 },
+            { embalse: "Barbate", capacidad: "273.4 hm³", cuenca: "Barbate", eje: "Suroeste-Noreste", iniciales: "SO-NE", termino: "Alcalá de los Gazules", llenado: 18, lat: 36.381, lon: -5.764 },
+            { embalse: "Charco Redondo", capacidad: "81.6 hm³", cuenca: "Palmones", eje: "Noroeste-Sureste", iniciales: "NO-SE", termino: "Los Barrios", llenado: 28, lat: 36.234, lon: -5.571 },
+            { embalse: "Celemín", capacidad: "44.8 hm³", cuenca: "Celemín", eje: "Noreste-Suroeste", iniciales: "NE-SO", termino: "Benalup-Casas Viejas", llenado: 20, lat: 36.262, lon: -5.748 },
+            { embalse: "Almodóvar", capacidad: "5.7 hm³", cuenca: "Almodóvar", eje: "Norte-Sur", iniciales: "N-S", termino: "Tarifa", llenado: 38, lat: 36.084, lon: -5.617 },
+            { embalse: "Arcos", capacidad: "14.6 hm³", cuenca: "Guadalete", eje: "Este-Oeste", iniciales: "E-O", termino: "Arcos de la Frontera", llenado: 88, lat: 36.757, lon: -5.776 }
+        ];
+
+        let state = {
+            activeTab: 'playa', // 'playa', 'rio', 'embalse'
+            selectedDayIndex: 0, 
+            windSpeed: 0,
+            windDeg: 0,
+            waveHeight: 0.0,
+            wavePeriod: 0,
+            sunrise: '--:--',  
+            sunset: '--:--',   
+            currentSpot: null,
+            latitude: null,
+            longitude: null,
+            
+            // Raw API records
+            weatherRaw: null,
+            marineRaw: null,
+            hourly: [],
+            spotMeta: null // Selected record metadata
+        };
+
+        // DOM elements mapping
+        const wavePath = document.getElementById('tideWavePath');
+        const wavePathSec = document.getElementById('tideWavePathSecondary');
+        const dynCardIcon = document.getElementById('dynCardIcon');
+        const dynCardTitle = document.getElementById('dynCardTitle');
+        const dynWaveLabel = document.getElementById('dynWaveLabel');
+        const dynWaveValue = document.getElementById('dynWaveValue');
+        const dynWaveTrend = document.getElementById('dynWaveTrend');
+        const dynBadge = document.getElementById('dynBadge');
+        const dynEventsContainer = document.getElementById('dynEventsContainer');
+
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
+        // Init theme helper
+        function initTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        });
+
+        // Initialize application parameters
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initTheme();
+            generateDateSelectors();
+            loadSelectsData();
+            switchTab('playa'); 
+            updateAppUI();
+        });
+
+        // Generate date slider days
+        function generateDateSelectors() {
+            const container = document.getElementById('dateSelectorContainer');
+            container.innerHTML = '';
+            
+            const weekdays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() + i);
+
+                let label = '';
+                if (i === 0) label = 'Hoy';
+                else if (i === 1) label = 'Mañana';
+                else label = weekdays[d.getDay()];
+
+                const dateStr = `${d.getDate()} ${months[d.getMonth()]}`;
+
+                const button = document.createElement('button');
+                button.onclick = () => selectDay(i);
+                button.id = `dateTab-${i}`;
+                
+                setTabStyles(button, i === state.selectedDayIndex);
+
+                button.innerHTML = `
+                    <span class="text-xs font-extrabold uppercase block">${label}</span>
+                    <span class="text-[9px] opacity-85 block whitespace-nowrap mt-0.5 font-mono">${dateStr}</span>
+                `;
+
+                container.appendChild(button);
+            }
+        }
+
+        function setTabStyles(btn, isActive) {
+            btn.className = isActive 
+                ? "flex-shrink-0 w-24 bg-gradient-to-br from-blue-600 to-sky-500 text-white rounded-2xl py-2.5 px-3.5 text-center shadow-lg shadow-blue-500/25 transition-all transform scale-105 snap-center"
+                : "flex-shrink-0 w-24 bg-white/60 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl py-2.5 px-3.5 text-center transition-all hover:border-blue-400 snap-center";
+        }
+
+        function selectDay(index) {
+            state.selectedDayIndex = index;
+            for (let i = 0; i < 7; i++) {
+                const btn = document.getElementById(`dateTab-${i}`);
+                if (btn) setTabStyles(btn, i === index);
+            }
+
+            if (state.currentSpot && state.weatherRaw) {
+                processActiveDayForecast();
+                showNotification(`Previsión del día actualizada.`, 'success');
+            } else {
+                updateAppUI();
+            }
+        }
+
+        // Population of options in select elements
+        function loadSelectsData() {
+            // 1. Playas Municipio Select
+            const muniSelect = document.getElementById('selectPlayaMunicipio');
+            muniSelect.innerHTML = '';
+            
+            // Extract unique municipalities
+            const uniqueMuni = [...new Set(PLAYAS_DB.map(p => p.municipio))].sort();
+            uniqueMuni.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                muniSelect.appendChild(opt);
+            });
+
+            // Trigger beach spots change
+            onPlayaMunicipioChanged();
+
+            // 2. Ríos Select
+            const rioSelect = document.getElementById('selectRioSpot');
+            rioSelect.innerHTML = '';
+            RIOS_DB.forEach((r, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = `${r.rio} (Curso: ${r.curso})`;
+                rioSelect.appendChild(opt);
+            });
+
+            // 3. Embalses Select
+            const embSelect = document.getElementById('selectEmbalseSpot');
+            embSelect.innerHTML = '';
+            EMBALSES_DB.forEach((e, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = `${e.embalse} (${e.capacidad}) - ${e.termino}`;
+                embSelect.appendChild(opt);
+            });
+        }
+
+        // Dependent beach spot updates based on selected municipality
+        function onPlayaMunicipioChanged() {
+            const muni = document.getElementById('selectPlayaMunicipio').value;
+            const spotSelect = document.getElementById('selectPlayaSpot');
+            spotSelect.innerHTML = '';
+
+            const filtered = PLAYAS_DB.filter(p => p.municipio === muni);
+            filtered.forEach(p => {
+                const opt = document.createElement('option');
+                // Store index in database
+                const dbIdx = PLAYAS_DB.indexOf(p);
+                opt.value = dbIdx;
+                opt.textContent = `${p.playa} (Orientación: ${p.orientacion})`;
+                spotSelect.appendChild(opt);
+            });
+        }
+
+        // Switch navigation tabs and adapt layout
+        function switchTab(tab) {
+            state.activeTab = tab;
+
+            const tPlaya = document.getElementById('tabPlaya');
+            const tRio = document.getElementById('tabRio');
+            const tEmb = document.getElementById('tabEmbalse');
+
+            const fPlaya = document.getElementById('formPlaya');
+            const fRio = document.getElementById('formRio');
+            const fEmb = document.getElementById('formEmbalse');
+
+            // Set styling attributes
+            [tPlaya, tRio, tEmb].forEach(t => {
+                t.className = "py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-all flex flex-col sm:flex-row items-center justify-center gap-1";
+            });
+
+            const activeTabButton = document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            activeTabButton.className = "py-2.5 rounded-lg bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm transition-all flex flex-col sm:flex-row items-center justify-center gap-1";
+
+            // Show appropriate inputs
+            fPlaya.classList.add('hidden');
+            fRio.classList.add('hidden');
+            fEmb.classList.add('hidden');
+
+            if (tab === 'playa') fPlaya.classList.remove('hidden');
+            else if (tab === 'rio') fRio.classList.remove('hidden');
+            else if (tab === 'embalse') fEmb.classList.remove('hidden');
+
+            // Force recalculations if a spot is already loaded
+            if (state.currentSpot) {
+                onConsultarSpotClick();
+            } else {
+                updateAppUI();
+            }
+        }
+
+        // Toast notifications center
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-xl shadow-lg border text-xs flex items-center gap-3 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto bg-white dark:bg-slate-900`;
+            
+            let colorClasses = 'border-blue-500 text-blue-700 dark:text-blue-300';
+            let icon = 'info';
+            
+            if (type === 'error') {
+                colorClasses = 'border-rose-500 text-rose-700 dark:text-rose-300';
+                icon = 'alert-triangle';
+            } else if (type === 'success') {
+                colorClasses = 'border-emerald-500 text-emerald-700 dark:text-emerald-300';
+                icon = 'check-circle';
+            }
+
+            toast.classList.add(...colorClasses.split(' '));
+            toast.innerHTML = `
+                <i data-lucide="${icon}" class="w-4 h-4 flex-shrink-0"></i>
+                <div class="flex-1 font-semibold">${message}</div>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function processActiveDayForecast() {
+            if (!state.weatherRaw) return;
+
+            const dIndex = state.selectedDayIndex;
+            
+            // Parse Sunrise & Sunset
+            const rawSunrise = state.weatherRaw.daily?.sunrise?.[dIndex] || '';
+            const rawSunset = state.weatherRaw.daily?.sunset?.[dIndex] || '';
+            state.sunrise = rawSunrise ? rawSunrise.split('T')[1] : '07:30';
+            state.sunset = rawSunset ? rawSunset.split('T')[1] : '21:45';
+
+            // Daytime hour check (defaults to 12 PM or current hour for "Hoy")
+            let targetHour = 12; 
+            if (dIndex === 0) {
+                targetHour = new Date().getHours();
+            }
+
+            const activeHourIndex = (dIndex * 24) + targetHour;
+
+            // Extract winds
+            const currentWind = state.weatherRaw.hourly?.wind_speed_10m?.[activeHourIndex] || 10;
+            const windDegree = state.weatherRaw.hourly?.wind_direction_10m?.[activeHourIndex] || 0;
+
+            // Extract waves for beaches
+            let waveH = 0.1;
+            let waveP = 5;
+
+            if (state.activeTab === 'playa' && state.marineRaw) {
+                waveH = state.marineRaw.hourly?.wave_height?.[activeHourIndex] || 0.1;
+                waveP = state.marineRaw.hourly?.wave_period?.[activeHourIndex] || 5;
+            }
+
+            // Sync model array
+            const targetHours = [6, 9, 12, 15, 18, 21];
+            const hTime = state.weatherRaw.hourly?.time || [];
+            const hTemp = state.weatherRaw.hourly?.temperature_2m || [];
+            const hWindSp = state.weatherRaw.hourly?.wind_speed_10m || [];
+            const hWindDir = state.weatherRaw.hourly?.wind_direction_10m || [];
+            const hWaveHeight = (state.activeTab === 'playa' && state.marineRaw) ? (state.marineRaw.hourly?.wave_height || []) : [];
+
+            state.hourly = targetHours.map(hour => {
+                const absoluteIndex = (dIndex * 24) + hour;
+                const fullTimeStr = hTime[absoluteIndex] || '';
+                const timeLabel = fullTimeStr ? fullTimeStr.split('T')[1] : `${hour.toString().padStart(2, '0')}:00`;
+                return {
+                    hour: timeLabel,
+                    temp: hTemp[absoluteIndex] ? Math.round(hTemp[absoluteIndex]) : 22,
+                    windSpeed: hWindSp[absoluteIndex] ? Math.round(hWindSp[absoluteIndex]) : 12,
+                    windDeg: hWindDir[absoluteIndex] || 0,
+                    waveHeight: state.activeTab === 'playa' ? (hWaveHeight[absoluteIndex] || 0.0) : null
+                };
+            });
+
+            // State updates
+            state.windSpeed = Math.round(currentWind);
+            state.windDeg = windDegree;
+            state.waveHeight = waveH;
+            state.wavePeriod = waveP;
+
+            updateAppUI();
+        }
+
+        async function onConsultarSpotClick() {
+            let activeSpot = null;
+            if (state.activeTab === 'playa') {
+                const idx = document.getElementById('selectPlayaSpot').value;
+                activeSpot = PLAYAS_DB[idx];
+            } else if (state.activeTab === 'rio') {
+                const idx = document.getElementById('selectRioSpot').value;
+                activeSpot = RIOS_DB[idx];
+            } else if (state.activeTab === 'embalse') {
+                const idx = document.getElementById('selectEmbalseSpot').value;
+                activeSpot = EMBALSES_DB[idx];
+            }
+
+            if (!activeSpot) return;
+
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.classList.remove('hidden');
+
+            const lat = activeSpot.lat;
+            const lon = activeSpot.lon;
+
+            try {
+                // Fetch daily and hourly meteo
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,wind_direction_10m&daily=sunrise,sunset&forecast_days=7&timezone=auto`;
+                const weatherRes = await fetch(weatherUrl);
+                const weatherData = await weatherRes.json();
+
+                let marineData = null;
+                if (state.activeTab === 'playa') {
+                    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_period&forecast_days=7`;
+                    const marineRes = await fetch(marineUrl);
+                    marineData = await marineRes.json();
+                }
+
+                // Sync global state
+                state.latitude = lat;
+                state.longitude = lon;
+                state.weatherRaw = weatherData;
+                state.marineRaw = marineData;
+                state.currentSpot = state.activeTab === 'playa' ? activeSpot.playa : (state.activeTab === 'rio' ? activeSpot.rio : activeSpot.embalse);
+                state.spotMeta = activeSpot;
+
+                processActiveDayForecast();
+
+                // Show metadata panel
+                const spotCard = document.getElementById('currentSpotCard');
+                spotCard.classList.remove('hidden');
+                document.getElementById('spotName').textContent = state.currentSpot;
+                
+                let metaHTML = '';
+                if (state.activeTab === 'playa') {
+                    metaHTML = `
+                        <p><strong class="font-semibold">Municipio:</strong> ${activeSpot.municipio}</p>
+                        <p><strong class="font-semibold">Orientación Playa:</strong> Dominante hacia el ${activeSpot.orientacion} (${activeSpot.iniciales})</p>
+                    `;
+                } else if (state.activeTab === 'rio') {
+                    metaHTML = `
+                        <p><strong class="font-semibold">Longitud del Curso:</strong> ${activeSpot.longitud}</p>
+                        <p><strong class="font-semibold">Desembocadura:</strong> ${activeSpot.desembocadura}</p>
+                        <p><strong class="font-semibold">Curso Predominante:</strong> Fluye de ${activeSpot.curso} (${activeSpot.iniciales})</p>
+                    `;
+                } else if (state.activeTab === 'embalse') {
+                    metaHTML = `
+                        <p><strong class="font-semibold">Municipio:</strong> ${activeSpot.termino}</p>
+                        <p><strong class="font-semibold">Capacidad Total:</strong> ${activeSpot.capacidad}</p>
+                        <p><strong class="font-semibold">Eje Orientación:</strong> ${activeSpot.eje}</p>
+                    `;
+                }
+                document.getElementById('spotMeta').innerHTML = metaHTML;
+
+                showNotification(`Condiciones para ${state.currentSpot} sincronizadas con éxito.`, 'success');
+            } catch (err) {
+                console.error(err);
+                showNotification("Ocurrió un error consultando las predicciones del Spot. Revisa tu conexión.", "error");
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        // Wind angle to Cardinal Label converter
+        function getWindCardinal(deg) {
+            const compassLabels = ['Norte (N)', 'NNE', 'Nordeste (NE)', 'ENE', 'Este (E)', 'ESE', 'Sudeste (SE)', 'SSE', 'Sur (S)', 'SSW', 'Sudoeste (SO)', 'WSW', 'Oeste (O)', 'WNW', 'Noroeste (NO)', 'NNW'];
+            const idx = Math.round(deg / 22.5) % 16;
+            return compassLabels[idx];
+        }
+
+        // Meteorological wind helper: Calculates where the wind blows *FROM*
+        // E.g. 0 deg wind blows from the North, pushing south.
+        function getWindSourceDescription(deg) {
+            const idx = Math.round(deg / 22.5) % 16;
+            const sources = ['Norte (N)', 'NNE', 'Nordeste (NE)', 'ENE', 'Este (E)', 'ESE', 'Sudeste (SE)', 'SSE', 'Sur (S)', 'SSW', 'Sudoeste (SO)', 'WSW', 'Oeste (O)', 'WNW', 'Noroeste (NO)', 'NNW'];
+            return sources[idx];
+        }
+
+        // Safety Decision Scoring Engine
+        function calculateSafetyScore() {
+            if (!state.currentSpot) {
+                return { score: null, warnings: [] };
+            }
+
+            let score = 100;
+            let warnings = [];
+
+            // 1. Wind speed penalties
+            if (state.windSpeed > 12) {
+                score -= (state.windSpeed - 12) * 5;
+                if (state.windSpeed > 18) {
+                    warnings.push("Viento muy fuerte (>18 km/h). Gran resistencia física requerida en la remada.");
+                } else {
+                    warnings.push("Viento moderado. Exige mayor esfuerzo y técnica de posicionamiento.");
+                }
+            }
+
+            // 2. Tab Specific Safety evaluations
+            if (state.activeTab === 'playa' && state.spotMeta) {
+                // Marine waves evaluations
+                if (state.waveHeight > 0.4) {
+                    score -= (state.waveHeight * 10) * 10;
+                    if (state.waveHeight > 0.8) {
+                        warnings.push("Fuerte oleaje marino (>0.8m). Dificulta seriamente ponerse de pie.");
+                    } else {
+                        warnings.push("Olas presentes en orilla. Atento a la inestabilidad y el equilibrio.");
+                    }
+                }
+                if (state.waveHeight > 0.4 && state.wavePeriod < 6) {
+                    score -= 10;
+                    warnings.push("Periodo de ola corto. Mar de viento desordenado e inestable (chopi).");
+                }
+
+                // Shore wind evaluations (Offshore is dangerous!)
+                const beachOrientation = state.spotMeta.iniciales; // e.g. "SO", "O", "S", "E"
+                const offshoreWinds = getOffshoreDirections(beachOrientation);
+                const windCardinalSimple = getWindCardinalSimple(state.windDeg);
+
+                if (offshoreWinds.includes(windCardinalSimple)) {
+                    score -= 30;
+                    warnings.push("⚠️ RIESGO OFFSHORE: El viento sopla hacia mar abierto. ¡Peligro de arrastre lejos de la orilla!");
+                }
+            } else if (state.activeTab === 'embalse') {
+                if (state.windSpeed > 15) {
+                    score -= 15;
+                    warnings.push("Ráfagas de viento en el embalse pueden crear corrientes incómodas de retorno.");
+                }
+            }
+
+            score = Math.max(0, Math.min(100, Math.round(score)));
+            return { score, warnings };
+        }
+
+        // Help converters for offshore computations
+        function getWindCardinalSimple(deg) {
+            const labels = ['N', 'NE', 'NE', 'E', 'E', 'SE', 'SE', 'S', 'S', 'SO', 'SO', 'O', 'O', 'NO', 'NO', 'N'];
+            const idx = Math.round(deg / 22.5) % 16;
+            return labels[idx];
+        }
+
+        // Returns cardinal directions of winds blowing offshore (from land to sea)
+        function getOffshoreDirections(beachOri) {
+            // E.g. If beach faces SO (South-West), land is at NE (North-East). Winds from N, NE, E blow offshore.
+            const mapping = {
+                "SO": ["N", "NE", "E"],
+                "O": ["NE", "E", "SE"],
+                "S": ["N", "NO", "NE"],
+                "E": ["O", "NO", "SO"]
+            };
+            return mapping[beachOri] || [];
+        }
+
+        // Tide Simulator (50 mins drift per day)
+        function calculateTides(lat, lon, targetDayIndex) {
+            if (!lat || !lon) return [];
+            
+            const now = new Date();
+            now.setDate(now.getDate() + targetDayIndex);
+            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+            
+            const lunarAge = (dayOfYear + 12) % 29.53; 
+            const lunarOffset = (lunarAge * 0.83) % 12.42; 
+            const lonOffset = (lon / 15) % 12.42;
+            
+            let firstHighTide = (4.2 + lunarOffset + lonOffset + 12.42) % 12.42;
+            let dayEvents = [];
+            let isHigh = true; 
+            
+            let baseTime = firstHighTide;
+            while (baseTime > 0) {
+                baseTime -= 6.21;
+                isHigh = !isHigh;
+            }
+            baseTime += 6.21;
+            isHigh = !isHigh;
+            
+            for (let t = baseTime; t < 24; t += 6.21) {
+                dayEvents.push({
+                    time: t,
+                    type: isHigh ? 'high' : 'low',
+                    label: isHigh ? 'Pleamar (Marea Alta)' : 'Bajamar (Marea Baja)'
+                });
+                isHigh = !isHigh;
+            }
+            
+            return dayEvents.sort((a, b) => a.time - b.time);
+        }
+
+        function decimalToTimeString(decimalHours) {
+            if (isNaN(decimalHours) || decimalHours < 0) return "--:--";
+            const hours = Math.floor(decimalHours);
+            const minutes = Math.round((decimalHours - hours) * 60) % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        // Inject custom circular drawings into the wind metric box
+        function drawWindGauge() {
+            const container = document.getElementById('windDrawingContainer');
+            container.innerHTML = '';
+
+            if (!state.currentSpot) {
+                container.innerHTML = `<i data-lucide="compass" class="w-8 h-8 text-slate-300"></i>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const windDeg = state.windDeg;
+
+            if (state.activeTab === 'playa' && state.spotMeta) {
+                // Playas: Circle divided horizontally. Top is sky/sea blue (agua), bottom is sand yellow (arena).
+                // Add North mark and a wind arrow pointing from source towards center.
+                const beachOrientation = state.spotMeta.iniciales; // e.g., "SO", "O", "S", "E"
+
+                // Create SVG element
+                const svgNS = "http://www.w3.org/2000/svg";
+                const svg = document.createElementNS(svgNS, "svg");
+                svg.setAttribute("viewBox", "0 0 100 100");
+                svg.setAttribute("class", "w-16 h-16");
+
+                // Draw water (top half - blue)
+                const water = document.createElementNS(svgNS, "path");
+                water.setAttribute("d", "M 10 50 A 40 40 0 0 1 90 50 Z");
+                water.setAttribute("fill", "#0284c7"); // Tailwind sky-600
+                water.setAttribute("opacity", "0.85");
+
+                // Draw sand (bottom half - yellow)
+                const sand = document.createElementNS(svgNS, "path");
+                sand.setAttribute("d", "M 90 50 A 40 40 0 0 1 10 50 Z");
+                sand.setAttribute("fill", "#fef08a"); // Tailwind yellow-200
+                sand.setAttribute("stroke", "#f59e0b");
+                sand.setAttribute("stroke-width", "1");
+
+                // Coastline separator
+                const line = document.createElementNS(svgNS, "line");
+                line.setAttribute("x1", "10");
+                line.setAttribute("y1", "50");
+                line.setAttribute("x2", "90");
+                line.setAttribute("y2", "50");
+                line.setAttribute("stroke", "#ffffff");
+                line.setAttribute("stroke-width", "2.5");
+
+                // Circle outline clipping mask simulation
+                const outer = document.createElementNS(svgNS, "circle");
+                outer.setAttribute("cx", "50");
+                outer.setAttribute("cy", "50");
+                outer.setAttribute("r", "40");
+                outer.setAttribute("fill", "none");
+                outer.setAttribute("stroke", "#64748b");
+                outer.setAttribute("stroke-width", "2.5");
+
+                // North Marker
+                const nMark = document.createElementNS(svgNS, "text");
+                nMark.setAttribute("x", "50");
+                nMark.setAttribute("y", "22");
+                nMark.setAttribute("fill", "#ffffff");
+                nMark.setAttribute("font-size", "11");
+                nMark.setAttribute("font-weight", "900");
+                nMark.setAttribute("text-anchor", "middle");
+                nMark.textContent = "N";
+
+                // Wind arrow pointing from source towards center
+                // Wind angle is meteorological (0 = north/top, 90 = east/right, etc.)
+                const rad = (windDeg - 180) * Math.PI / 180; // Pointing towards center (opposite vector)
+                const startX = 50 + 35 * Math.sin(windDeg * Math.PI / 180);
+                const startY = 50 - 35 * Math.cos(windDeg * Math.PI / 180);
+                const endX = 50 + 8 * Math.sin(rad);
+                const endY = 50 - 8 * Math.cos(rad);
+
+                const arrowGroup = document.createElementNS(svgNS, "g");
+                
+                // Draw Line
+                const arrowLine = document.createElementNS(svgNS, "line");
+                arrowLine.setAttribute("x1", startX);
+                arrowLine.setAttribute("y1", startY);
+                arrowLine.setAttribute("x2", endX);
+                arrowLine.setAttribute("y2", endY);
+                arrowLine.setAttribute("stroke", "#f43f5e"); // Tailwind rose-500
+                arrowLine.setAttribute("stroke-width", "3.5");
+                arrowLine.setAttribute("stroke-linecap", "round");
+
+                // Draw Head pointing to center
+                const headLength = 8;
+                const headAngle1 = rad - (5 * Math.PI / 6);
+                const headAngle2 = rad + (5 * Math.PI / 6);
+                const h1X = endX + headLength * Math.sin(headAngle1);
+                const h1Y = endY - headLength * Math.cos(headAngle1);
+                const h2X = endX + headLength * Math.sin(headAngle2);
+                const h2Y = endY - headLength * Math.cos(headAngle2);
+
+                const arrowHead = document.createElementNS(svgNS, "polygon");
+                arrowHead.setAttribute("points", `${endX},${endY} ${h1X},${h1Y} ${h2X},${h2Y}`);
+                arrowHead.setAttribute("fill", "#f43f5e");
+
+                arrowGroup.appendChild(arrowLine);
+                arrowGroup.appendChild(arrowHead);
+
+                // Compile beach landscape
+                svg.appendChild(water);
+                svg.appendChild(sand);
+                svg.appendChild(line);
+                svg.appendChild(outer);
+                svg.appendChild(nMark);
+                svg.appendChild(arrowGroup);
+
+                container.appendChild(svg);
+
+            } else if (state.activeTab === 'rio' && state.spotMeta) {
+                // Ríos: Green meadows with a winding blue river matching the predominant course (e.g. NE-SO).
+                const svgNS = "http://www.w3.org/2000/svg";
+                const svg = document.createElementNS(svgNS, "svg");
+                svg.setAttribute("viewBox", "0 0 100 100");
+                svg.setAttribute("class", "w-16 h-16");
+
+                // Draw Green background meadow
+                const meadow = document.createElementNS(svgNS, "circle");
+                meadow.setAttribute("cx", "50");
+                meadow.setAttribute("cy", "50");
+                meadow.setAttribute("r", "40");
+                meadow.setAttribute("fill", "#22c55e"); // Green-500
+                meadow.setAttribute("opacity", "0.75");
+                meadow.setAttribute("stroke", "#475569");
+                meadow.setAttribute("stroke-width", "2");
+
+                // River path based on the actual course
+                // Support mapping key directions to line angles:
+                // "NE-SO" -> top-right to bottom-left
+                // "N-S" -> top to bottom
+                // "E-O" -> right to left
+                // "O-E" -> left to right
+                const course = state.spotMeta.iniciales;
+                let rx1 = 15, ry1 = 50, rx2 = 85, ry2 = 50; // default E-O
+                if (course === "NE-SO") { rx1 = 78; ry1 = 22; rx2 = 22; ry2 = 78; }
+                else if (course === "N-S") { rx1 = 50; ry1 = 15; rx2 = 50; ry2 = 85; }
+                else if (course === "SO-NE") { rx1 = 22; ry1 = 78; rx2 = 78; ry2 = 22; }
+
+                const river = document.createElementNS(svgNS, "line");
+                river.setAttribute("x1", rx1);
+                river.setAttribute("y1", ry1);
+                river.setAttribute("x2", rx2);
+                river.setAttribute("y2", ry2);
+                river.setAttribute("stroke", "#3b82f6"); // Blue-500
+                river.setAttribute("stroke-width", "10");
+                river.setAttribute("stroke-linecap", "round");
+
+                // Draw North Marker
+                const nMark = document.createElementNS(svgNS, "text");
+                nMark.setAttribute("x", "50");
+                nMark.setAttribute("y", "24");
+                nMark.setAttribute("fill", "#ffffff");
+                nMark.setAttribute("font-size", "10");
+                nMark.setAttribute("font-weight", "900");
+                nMark.setAttribute("text-anchor", "middle");
+                nMark.textContent = "N";
+
+                // Wind arrow pointing from source towards center
+                const rad = (windDeg - 180) * Math.PI / 180;
+                const startX = 50 + 35 * Math.sin(windDeg * Math.PI / 180);
+                const startY = 50 - 35 * Math.cos(windDeg * Math.PI / 180);
+                const endX = 50 + 8 * Math.sin(rad);
+                const endY = 50 - 8 * Math.cos(rad);
+
+                const arrowGroup = document.createElementNS(svgNS, "g");
+                const arrowLine = document.createElementNS(svgNS, "line");
+                arrowLine.setAttribute("x1", startX);
+                arrowLine.setAttribute("y1", startY);
+                arrowLine.setAttribute("x2", endX);
+                arrowLine.setAttribute("y2", endY);
+                arrowLine.setAttribute("stroke", "#e11d48"); // Rose-600
+                arrowLine.setAttribute("stroke-width", "3.5");
+
+                const headLength = 8;
+                const headAngle1 = rad - (5 * Math.PI / 6);
+                const headAngle2 = rad + (5 * Math.PI / 6);
+                const h1X = endX + headLength * Math.sin(headAngle1);
+                const h1Y = endY - headLength * Math.cos(headAngle1);
+                const h2X = endX + headLength * Math.sin(headAngle2);
+                const h2Y = endY - headLength * Math.cos(headAngle2);
+
+                const arrowHead = document.createElementNS(svgNS, "polygon");
+                arrowHead.setAttribute("points", `${endX},${endY} ${h1X},${h1Y} ${h2X},${h2Y}`);
+                arrowHead.setAttribute("fill", "#e11d48");
+
+                arrowGroup.appendChild(arrowLine);
+                arrowGroup.appendChild(arrowHead);
+
+                svg.appendChild(meadow);
+                svg.appendChild(river);
+                svg.appendChild(nMark);
+                svg.appendChild(arrowGroup);
+
+                container.appendChild(svg);
+
+            } else if (state.activeTab === 'embalse') {
+                // Embalses: Simply display a clean compass with North and Wind Arrow pointing from source to center
+                const svgNS = "http://www.w3.org/2000/svg";
+                const svg = document.createElementNS(svgNS, "svg");
+                svg.setAttribute("viewBox", "0 0 100 100");
+                svg.setAttribute("class", "w-16 h-16");
+
+                const disc = document.createElementNS(svgNS, "circle");
+                disc.setAttribute("cx", "50");
+                disc.setAttribute("cy", "50");
+                disc.setAttribute("r", "40");
+                disc.setAttribute("fill", "#0f172a"); // Dark slate slate-900
+                disc.setAttribute("stroke", "#334155");
+                disc.setAttribute("stroke-width", "2");
+
+                const nMark = document.createElementNS(svgNS, "text");
+                nMark.setAttribute("x", "50");
+                nMark.setAttribute("y", "24");
+                nMark.setAttribute("fill", "#ef4444"); // Red-500
+                nMark.setAttribute("font-size", "11");
+                nMark.setAttribute("font-weight", "900");
+                nMark.setAttribute("text-anchor", "middle");
+                nMark.textContent = "N";
+
+                // Wind arrow
+                const rad = (windDeg - 180) * Math.PI / 180;
+                const startX = 50 + 35 * Math.sin(windDeg * Math.PI / 180);
+                const startY = 50 - 35 * Math.cos(windDeg * Math.PI / 180);
+                const endX = 50 + 8 * Math.sin(rad);
+                const endY = 50 - 8 * Math.cos(rad);
+
+                const arrowGroup = document.createElementNS(svgNS, "g");
+                const arrowLine = document.createElementNS(svgNS, "line");
+                arrowLine.setAttribute("x1", startX);
+                arrowLine.setAttribute("y1", startY);
+                arrowLine.setAttribute("x2", endX);
+                arrowLine.setAttribute("y2", endY);
+                arrowLine.setAttribute("stroke", "#38bdf8"); // Sky-400
+                arrowLine.setAttribute("stroke-width", "3");
+
+                const headLength = 7;
+                const headAngle1 = rad - (5 * Math.PI / 6);
+                const headAngle2 = rad + (5 * Math.PI / 6);
+                const h1X = endX + headLength * Math.sin(headAngle1);
+                const h1Y = endY - headLength * Math.cos(headAngle1);
+                const h2X = endX + headLength * Math.sin(headAngle2);
+                const h2Y = endY - headLength * Math.cos(headAngle2);
+
+                const arrowHead = document.createElementNS(svgNS, "polygon");
+                arrowHead.setAttribute("points", `${endX},${endY} ${h1X},${h1Y} ${h2X},${h2Y}`);
+                arrowHead.setAttribute("fill", "#38bdf8");
+
+                arrowGroup.appendChild(arrowLine);
+                arrowGroup.appendChild(arrowHead);
+
+                svg.appendChild(disc);
+                svg.appendChild(nMark);
+                svg.appendChild(arrowGroup);
+
+                container.appendChild(svg);
+            }
+        }
+
+        // Update user interface based on tab selection
+        function updateAppUI() {
+            // Sunrise sunset sync
+            document.getElementById('sunriseTime').textContent = state.sunrise;
+            document.getElementById('sunsetTime').textContent = state.sunset;
+
+            // Configure layout grids depending on state
+            const m3Card = document.getElementById('metric3Card');
+            const m4Card = document.getElementById('metric4Card');
+
+            const m3Title = document.getElementById('metric3Title');
+            const m4Title = document.getElementById('metric4Title');
+
+            const m3Icon = document.getElementById('metric3Icon');
+            const m4Icon = document.getElementById('metric4Icon');
+
+            // Hide/Show grids dynamically
+            if (state.activeTab === 'playa') {
+                m3Card.classList.remove('hidden');
+                m4Card.classList.remove('hidden');
+                
+                m3Title.textContent = "Altura de Ola";
+                m3Icon.setAttribute('data-lucide', 'waves');
+                document.getElementById('metricWave').textContent = state.currentSpot ? `${state.waveHeight.toFixed(1)} m` : "-- m";
+                
+                let waveCap = "Mar plato";
+                if (state.waveHeight > 0.3) waveCap = "Pequeño picado";
+                if (state.waveHeight > 0.7) waveCap = "Olas notables";
+                document.getElementById('metricWaveCap').textContent = state.currentSpot ? waveCap : "Estado del mar";
+
+                m4Title.textContent = "Periodo de Ola";
+                m4Icon.setAttribute('data-lucide', 'timer');
+                document.getElementById('metricPeriod').textContent = state.currentSpot ? `${state.wavePeriod} s` : "-- s";
+                
+                let periodCap = "Poca fuerza";
+                if (state.wavePeriod > 8) periodCap = "Mar de fondo limpio";
+                if (state.wavePeriod < 6 && state.waveHeight > 0.3) periodCap = "Mar desordenado";
+                document.getElementById('metricPeriodCap').textContent = state.currentSpot ? periodCap : "Fuerza de ola";
+
+            } else if (state.activeTab === 'rio') {
+                // Rivers strictly require only TWO metrics: Wind speed and Wind direction
+                m3Card.classList.add('hidden');
+                m4Card.classList.add('hidden');
+
+            } else if (state.activeTab === 'embalse') {
+                // Reservoirs require 3 cards: Wind Speed, Wind Direction, and Filling %
+                m3Card.classList.remove('hidden');
+                m4Card.classList.add('hidden'); // hide card 4
+
+                m3Title.textContent = "Nivel de Llenado";
+                m3Icon.setAttribute('data-lucide', 'percent');
+                
+                if (state.currentSpot && state.spotMeta) {
+                    document.getElementById('metricWave').textContent = `${state.spotMeta.llenado}%`;
+                    document.getElementById('metricWaveCap').textContent = `Llenado actual / Capacidad: ${state.spotMeta.capacidad}`;
+                } else {
+                    document.getElementById('metricWave').textContent = "--%";
+                    document.getElementById('metricWaveCap').textContent = "Llenado de embalse";
+                }
+            }
+
+            // Update wind speed text
+            document.getElementById('metricWind').textContent = state.currentSpot ? `${state.windSpeed} km/h` : "-- km/h";
+            if (state.currentSpot) {
+                let windCap = "Brisa ideal";
+                if (state.windSpeed > 12) windCap = "Moderado";
+                if (state.windSpeed > 18) windCap = "¡Muy fuerte!";
+                document.getElementById('metricWindCap').textContent = windCap;
+
+                document.getElementById('metricWindDir').textContent = `${state.windDeg}°`;
+                const originLabel = getWindSourceDescription(state.windDeg);
+                document.getElementById('metricWindDirCardinal').textContent = `Viento del ${getWindCardinalSimple(state.windDeg)}`;
+                document.getElementById('metricWindDirAngle').textContent = `Sopla desde el ${originLabel}`;
+            } else {
+                document.getElementById('metricWindCap').textContent = "Esperando spot";
+                document.getElementById('metricWindDir').textContent = "--";
+                document.getElementById('metricWindDirCardinal').textContent = "Cardinal";
+                document.getElementById('metricWindDirAngle').textContent = "Sopla desde el origen";
+            }
+
+            // Draw Wind circular SVGs
+            drawWindGauge();
+
+            // Update Dynamic Water behaviors depending on selected tab
+            if (state.activeTab === 'playa') {
+                dynCardIcon.setAttribute('data-lucide', 'waves');
+                dynCardTitle.textContent = "Mareas de Cádiz";
+                dynWaveLabel.textContent = "Nivel de Marea estimado";
+
+                const tides = calculateTides(state.latitude, state.longitude, state.selectedDayIndex);
+                if (tides && tides.length > 0) {
+                    dynEventsContainer.innerHTML = '';
+                    
+                    const now = new Date();
+                    const currentDecimalHour = (state.selectedDayIndex === 0) 
+                        ? (now.getHours() + now.getMinutes() / 60)
+                        : 12; // Noon of selected day
+                    
+                    let previousEvent = null;
+                    let nextEvent = null;
+
+                    const expandedTides = [
+                        { time: tides[tides.length - 1].time - 12.42, type: tides[tides.length - 1].type },
+                        ...tides,
+                        { time: tides[0].time + 24, type: tides[0].type }
+                    ];
+
+                    for (let i = 0; i < expandedTides.length - 1; i++) {
+                        if (currentDecimalHour >= expandedTides[i].time && currentDecimalHour <= expandedTides[i + 1].time) {
+                            previousEvent = expandedTides[i];
+                            nextEvent = expandedTides[i + 1];
+                            break;
+                        }
+                    }
+
+                    if (!previousEvent) previousEvent = { time: currentDecimalHour - 6, type: 'low' };
+                    if (!nextEvent) nextEvent = { time: currentDecimalHour + 6, type: 'high' };
+
+                    const duration = nextEvent.time - previousEvent.time;
+                    const elapsed = currentDecimalHour - previousEvent.time;
+                    const progress = Math.max(0, Math.min(1, elapsed / duration));
+
+                    let tideHeightFactor = 0;
+                    let trendStr = "";
+                    
+                    if (previousEvent.type === 'low') {
+                        tideHeightFactor = (1 - Math.cos(progress * Math.PI)) / 2;
+                        trendStr = `Llenando (Subiendo a Pleamar en ${decimalToTimeString(nextEvent.time - (nextEvent.time >= 24 ? 24 : 0))})`;
+                        dynBadge.textContent = "Subiendo";
+                        dynBadge.className = "text-[9px] px-2.5 py-1 rounded-full font-bold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/50";
+                    } else {
+                        tideHeightFactor = (1 + Math.cos(progress * Math.PI)) / 2;
+                        trendStr = `Vaciando (Bajando a Bajamar en ${decimalToTimeString(nextEvent.time - (nextEvent.time >= 24 ? 24 : 0))})`;
+                        dynBadge.textContent = "Bajando";
+                        dynBadge.className = "text-[9px] px-2.5 py-1 rounded-full font-bold uppercase bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200/50";
+                    }
+
+                    const currentHeightPercent = Math.round(tideHeightFactor * 100);
+                    dynWaveValue.textContent = `${currentHeightPercent}%`;
+                    dynWaveTrend.textContent = trendStr;
+
+                    // Animate Wave height
+                    const baseHeightY = 100 - (20 + (currentHeightPercent * 0.65));
+                    wavePath.setAttribute('d', `M0,${baseHeightY} Q25,${baseHeightY - 8} 50,${baseHeightY} T100,${baseHeightY} L100,100 L0,100 Z`);
+                    wavePathSec.setAttribute('d', `M0,${baseHeightY + 4} Q25,${baseHeightY - 4} 50,${baseHeightY + 4} T100,${baseHeightY + 4} L100,100 L0,100 Z`);
+
+                    tides.forEach(evt => {
+                        const evtTimeStr = decimalToTimeString(evt.time);
+                        const isPast = state.selectedDayIndex === 0 && evt.time < currentDecimalHour;
+                        
+                        const row = document.createElement('div');
+                        row.className = `flex items-center justify-between p-2 rounded-xl text-[11px] border ${
+                            isPast 
+                            ? 'bg-slate-100/50 dark:bg-slate-900/30 text-slate-400 dark:text-slate-500 border-transparent' 
+                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-800/80 shadow-sm'
+                        }`;
+
+                        const iconHTML = evt.type === 'high' 
+                            ? `<i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-500"></i>` 
+                            : `<i data-lucide="trending-down" class="w-3.5 h-3.5 text-sky-500"></i>`;
+
+                        row.innerHTML = `
+                            <div class="flex items-center gap-2 font-semibold">
+                                ${iconHTML}
+                                <span>${evt.label}</span>
+                                ${isPast ? `<span class="text-[8px] uppercase font-bold text-slate-400 dark:text-slate-500">(Pasada)</span>` : ''}
+                            </div>
+                            <span class="font-bold text-slate-800 dark:text-white font-mono">${evtTimeStr}</span>
+                        `;
+                        dynEventsContainer.appendChild(row);
+                    });
+                }
+            } else if (state.activeTab === 'rio') {
+                // Ríos: We display safe navigation windows inside the tidal channels of Cádiz (like Río San Pedro)
+                dynCardIcon.setAttribute('data-lucide', 'navigation');
+                dynCardTitle.textContent = "Ventana de Marea Fluvial";
+                dynWaveLabel.textContent = "Nivel de Marea estimado";
+
+                const tides = calculateTides(state.latitude, state.longitude, state.selectedDayIndex);
+                if (tides && tides.length > 0) {
+                    dynEventsContainer.innerHTML = '';
+                    
+                    const now = new Date();
+                    const currentDecimalHour = (state.selectedDayIndex === 0) 
+                        ? (now.getHours() + now.getMinutes() / 60)
+                        : 12; // Noon
+                    
+                    let previousEvent = null;
+                    let nextEvent = null;
+
+                    const expandedTides = [
+                        { time: tides[tides.length - 1].time - 12.42, type: tides[tides.length - 1].type },
+                        ...tides,
+                        { time: tides[0].time + 24, type: tides[0].type }
+                    ];
+
+                    for (let i = 0; i < expandedTides.length - 1; i++) {
+                        if (currentDecimalHour >= expandedTides[i].time && currentDecimalHour <= expandedTides[i + 1].time) {
+                            previousEvent = expandedTides[i];
+                            nextEvent = expandedTides[i + 1];
+                            break;
+                        }
+                    }
+
+                    if (!previousEvent) previousEvent = { time: currentDecimalHour - 6, type: 'low' };
+                    if (!nextEvent) nextEvent = { time: currentDecimalHour + 6, type: 'high' };
+
+                    const duration = nextEvent.time - previousEvent.time;
+                    const elapsed = currentDecimalHour - previousEvent.time;
+                    const progress = Math.max(0, Math.min(1, elapsed / duration));
+
+                    let tideHeightFactor = 0;
+                    let trendStr = "";
+                    
+                    if (previousEvent.type === 'low') {
+                        tideHeightFactor = (1 - Math.cos(progress * Math.PI)) / 2;
+                        trendStr = `Llenando (Próxima Pleamar en ${decimalToTimeString(nextEvent.time - (nextEvent.time >= 24 ? 24 : 0))})`;
+                        dynBadge.textContent = "Llenando";
+                        dynBadge.className = "text-[9px] px-2.5 py-1 rounded-full font-bold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/50";
+                    } else {
+                        tideHeightFactor = (1 + Math.cos(progress * Math.PI)) / 2;
+                        trendStr = `Vaciando (Próxima Bajamar en ${decimalToTimeString(nextEvent.time - (nextEvent.time >= 24 ? 24 : 0))})`;
+                        dynBadge.textContent = "Vaciando";
+                        dynBadge.className = "text-[9px] px-2.5 py-1 rounded-full font-bold uppercase bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200/50";
+                    }
+
+                    const currentHeightPercent = Math.round(tideHeightFactor * 100);
+                    dynWaveValue.textContent = `${currentHeightPercent}%`;
+                    dynWaveTrend.textContent = trendStr;
+
+                    const baseHeightY = 100 - (20 + (currentHeightPercent * 0.65));
+                    wavePath.setAttribute('d', `M0,${baseHeightY} Q25,${baseHeightY - 8} 50,${baseHeightY} T100,${baseHeightY} L100,100 L0,100 Z`);
+                    wavePathSec.setAttribute('d', `M0,${baseHeightY + 4} Q25,${baseHeightY - 4} 50,${baseHeightY + 4} T100,${baseHeightY + 4} L100,100 L0,100 Z`);
+
+                    // Explanatory Note for estuaries/rias
+                    const helpNote = document.createElement('div');
+                    helpNote.className = "p-3 bg-blue-500/10 dark:bg-blue-500/5 rounded-xl border border-blue-500/20 text-[10px] text-blue-700 dark:text-blue-300 space-y-1";
+                    helpNote.innerHTML = `
+                        <div class="flex items-center gap-1.5 font-bold">
+                            <i data-lucide="help-circle" class="w-4 h-4 text-blue-500"></i>
+                            <span>Ventana de Marea en Estuarios y Rías</span>
+                        </div>
+                        <p class="text-[9px] text-slate-500 dark:text-slate-400">En rías y caños (ej. Río San Pedro), planifica la entrada y salida respecto a la Pleamar para evitar quedar encallado en fango.</p>
+                    `;
+                    dynEventsContainer.appendChild(helpNote);
+
+                    tides.forEach(evt => {
+                        if (evt.type === 'high') {
+                            const pleamarTime = evt.time;
+                            
+                            const entryStart = (pleamarTime - 2.5 + 24) % 24;
+                            const entryEnd = (pleamarTime - 0.5 + 24) % 24;
+                            
+                            const exitStart = pleamarTime;
+                            const exitEnd = (pleamarTime + 1.5) % 24;
+
+                            const card = document.createElement('div');
+                            card.className = "p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2 shadow-sm text-[11px]";
+                            card.innerHTML = `
+                                <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-1.5">
+                                    <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                                        Pleamar Fluvial estimada: <span class="font-mono text-blue-600 dark:text-blue-400">${decimalToTimeString(pleamarTime)}</span>
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-[9px]">
+                                    <div class="bg-emerald-500/5 border border-emerald-500/20 p-2 rounded-lg space-y-0.5">
+                                        <span class="font-extrabold text-emerald-600 dark:text-emerald-400 block uppercase tracking-wider text-[8px]">Entrar al Cauce</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200 font-mono text-[11px]">${decimalToTimeString(entryStart)} - ${decimalToTimeString(entryEnd)}</span>
+                                        <p class="text-slate-400">Agua subiendo. Te ayuda a remontar y evita fango.</p>
+                                    </div>
+                                    <div class="bg-amber-500/5 border border-amber-500/20 p-2 rounded-lg space-y-0.5">
+                                        <span class="font-extrabold text-amber-600 dark:text-amber-400 block uppercase tracking-wider text-[8px]">Regresar / Salir</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200 font-mono text-[11px]">${decimalToTimeString(exitStart)} - ${decimalToTimeString(exitEnd)}</span>
+                                        <p class="text-slate-400">Máximo calado. Vuelve antes de que empiece a vaciar.</p>
+                                    </div>
+                                </div>
+                            `;
+                            dynEventsContainer.appendChild(card);
+                        }
+                    });
+                }
+            } else if (state.activeTab === 'embalse') {
+                // Embalses: Tides are flat (0%). Show instructions of stability and general level storage status.
+                dynCardIcon.setAttribute('data-lucide', 'shield-alert');
+                dynCardTitle.textContent = "Estabilidad Embalse";
+                dynWaveLabel.textContent = "Nivel del agua embalsada";
+
+                const percentage = state.currentSpot && state.spotMeta ? state.spotMeta.llenado : 0;
+                dynWaveValue.textContent = `${percentage}%`;
+                dynWaveTrend.textContent = state.currentSpot ? "Sin mareas de corriente" : "Sincroniza un embalse";
+
+                const baseHeightY = 100 - (20 + (percentage * 0.65));
+                wavePath.setAttribute('d', `M0,${baseHeightY} L100,${baseHeightY} L100,100 L0,100 Z`);
+                wavePathSec.setAttribute('d', `M0,${baseHeightY + 4} L100,${baseHeightY + 4} L100,100 L0,100 Z`);
+
+                dynEventsContainer.innerHTML = '';
+                if (state.currentSpot && state.spotMeta) {
+                    const row = document.createElement('div');
+                    row.className = "p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl space-y-2 shadow-sm text-[11px]";
+                    
+                    let stabilityText = "Nivel bajo de agua. Puede haber bancos de tierra o restos de vegetación expuestos. Navega con atención.";
+                    if (percentage > 50) stabilityText = "Excelente volumen de agua. Entorno amplio y seguro para realizar travesías largas de remo.";
+                    if (percentage > 80) stabilityText = "Llenado óptimo. Prácticamente todo el perímetro es navegable sin riesgos de encallar.";
+
+                    row.innerHTML = `
+                        <div class="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                            <i data-lucide="info" class="w-4 h-4 text-blue-500"></i>
+                            <span>Evaluación del Nivel de Llenado</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">${stabilityText}</p>
+                    `;
+                    dynEventsContainer.appendChild(row);
+                } else {
+                    dynEventsContainer.innerHTML = `
+                        <div class="flex items-center gap-2 text-slate-400 text-xs font-semibold p-2">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
+                            <span>Sincroniza un embalse para ver el análisis de estabilidad...</span>
+                        </div>
+                    `;
+                }
+            }
+
+            // Safety Decision Box Sync
+            const { score, warnings } = calculateSafetyScore();
+            const progressCircle = document.getElementById('gaugeProgress');
+            const circumference = 2 * Math.PI * 58; 
+
+            const decisionCard = document.getElementById('decisionCard');
+            const statusBadge = document.getElementById('statusBadge');
+            const decisionTitle = document.getElementById('decisionTitle');
+            const decisionDesc = document.getElementById('decisionDesc');
+            
+            decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-slate-50/50 dark:bg-slate-900/10 border-slate-200/50 dark:border-slate-800/50";
+            statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-slate-300/20";
+            progressCircle.className.baseVal = "";
+
+            if (score === null) {
+                progressCircle.style.strokeDashoffset = circumference;
+                document.getElementById('scoreText').textContent = `--%`;
+                progressCircle.classList.add("stroke-slate-300");
+                
+                decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-slate-50/50 dark:bg-slate-900/10 border-slate-200/50 dark:border-slate-800/50";
+                statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300 border border-slate-300/20";
+                statusBadge.textContent = "Sin datos";
+                decisionTitle.textContent = "Sincroniza tu spot de Cádiz";
+                decisionDesc.textContent = "Evaluaremos vuestro plan diario teniendo en cuenta la fuerza del viento, las olas del Atlántico o la orientación de cada playa/embalse para garantizar la seguridad del grupo.";
+            } else {
+                const offset = circumference - (score / 100) * circumference;
+                progressCircle.style.strokeDashoffset = offset;
+                document.getElementById('scoreText').textContent = `${score}%`;
+
+                if (score >= 75) {
+                    decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-emerald-50/40 dark:bg-emerald-950/10 border-emerald-500/30";
+                    statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-500/20";
+                    statusBadge.textContent = "Óptimo";
+                    decisionTitle.textContent = "¡Condiciones Excelentes para Pádel Surf!";
+                    decisionDesc.textContent = "El viento y la dirección de las olas o las corrientes son altamente seguras en este spot hoy. ¡Disfrutad del agua!";
+                    progressCircle.classList.add("stroke-emerald-500");
+                } else if (score >= 45) {
+                    decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-amber-50/40 dark:bg-amber-950/10 border-amber-500/30";
+                    statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-500/20";
+                    statusBadge.textContent = "Límite";
+                    decisionTitle.textContent = "Condiciones Límite (Atención)";
+                    decisionDesc.textContent = "Hay viento o corrientes moderadas que aumentan la fatiga y el esfuerzo de remo. Valora tu experiencia técnica antes de salir.";
+                    progressCircle.classList.add("stroke-amber-500");
+                } else {
+                    decisionCard.className = "relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-md border-2 transition-all duration-300 bg-rose-50/40 dark:bg-rose-950/10 border-rose-500/30";
+                    statusBadge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-800 dark:bg-rose-950 text-rose-300 border border-rose-500/20";
+                    statusBadge.textContent = "No Apto";
+                    decisionTitle.textContent = "⚠️ Condiciones Peligrosas";
+                    decisionDesc.textContent = "El sistema desaconseja totalmente entrar al agua debido a vientos de arrastre offshore desfavorables o fuerte oleaje.";
+                    progressCircle.classList.add("stroke-rose-500");
+                }
+            }
+
+            // Warnings block updating
+            const safetyContainer = document.getElementById('safetyAlerts');
+            safetyContainer.innerHTML = '';
+            
+            if (score === null) {
+                safetyContainer.innerHTML = `
+                    <div class="flex items-center gap-2 text-slate-400 text-xs font-semibold">
+                        <i data-lucide="help-circle" class="w-4 h-4"></i>
+                        <span>Esperando spot para analizar riesgos latentes...</span>
+                    </div>
+                `;
+            } else if (warnings.length === 0) {
+                safetyContainer.innerHTML = `
+                    <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span>No hay alertas activas de peligro. Todo parece seguro.</span>
+                    </div>
+                `;
+            } else {
+                warnings.forEach(warn => {
+                    const warnEl = document.createElement('div');
+                    warnEl.className = "flex items-start gap-2 text-rose-600 dark:text-rose-400 text-[11px] font-medium bg-rose-500/5 dark:bg-rose-500/10 p-2 rounded-lg border border-rose-500/10";
+                    warnEl.innerHTML = `
+                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5 mt-0.5 flex-shrink-0"></i>
+                        <span>${warn}</span>
+                    `;
+                    safetyContainer.appendChild(warnEl);
+                });
+            }
+
+            lucide.createIcons();
+            renderHourlyForecast();
+        }
+
+        // Render 3-hour interval dynamic sliding carousel
+        function renderHourlyForecast() {
+            const container = document.getElementById('hourlyForecastContainer');
+            container.innerHTML = '';
+
+            if (!state.currentSpot || state.hourly.length === 0) {
+                container.innerHTML = `
+                    <div class="text-xs text-slate-400 italic py-4 flex items-center gap-2">
+                        <i data-lucide="info" class="w-4 h-4"></i>
+                        <span>Sincroniza un spot de Cádiz para ver la evolución horaria del viento y olas de esa jornada...</span>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            state.hourly.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "flex-shrink-0 w-32 bg-white/40 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 p-3 rounded-xl text-center space-y-2 snap-start shadow-sm";
+                
+                const windCardinal = getWindCardinalSimple(item.windDeg);
+
+                let dotColor = "bg-emerald-500";
+                if (item.windSpeed > 12 && item.windSpeed <= 18) {
+                    dotColor = "bg-amber-500";
+                } else if (item.windSpeed > 18) {
+                    dotColor = "bg-rose-500";
+                }
+
+                let waveHTML = '';
+                if (state.activeTab === 'playa' && item.waveHeight !== null) {
+                    waveHTML = `
+                        <div class="flex items-center justify-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 font-bold border-t border-slate-100 dark:border-slate-800/40 pt-1.5 mt-1.5">
+                            <i data-lucide="waves" class="w-3.5 h-3.5"></i>
+                            <span>${item.waveHeight.toFixed(1)} m</span>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">${item.hour}</span>
+                        <span class="w-2 h-2 rounded-full ${dotColor}"></span>
+                    </div>
+                    <div class="text-lg font-black text-slate-800 dark:text-white">${item.temp}°C</div>
+                    
+                    <div class="border-t border-slate-100 dark:border-slate-800/40 pt-2 space-y-1.5">
+                        <div class="flex items-center justify-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <i data-lucide="wind" class="w-3.5 h-3.5 text-sky-500"></i>
+                            <span class="font-bold">${item.windSpeed} km/h</span>
+                        </div>
+                        <div class="flex items-center justify-center gap-1 text-[10px] text-slate-400">
+                            <div class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center text-sky-600 dark:text-sky-400" style="transform: rotate(${item.windDeg}deg)">
+                                <i data-lucide="arrow-up" class="w-3 h-3"></i>
+                            </div>
+                            <span class="font-bold">${windCardinal}</span>
+                        </div>
+                        ${waveHTML}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
